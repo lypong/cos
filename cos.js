@@ -43,8 +43,8 @@ function getCurrentWorkingDirectoryPath(){
 }
 function dir(...path){
     let oldPath = getCurrentWorkingDirectoryPath();
-    if(path.length>0)
-      chdir(path.join(""));
+    if(path.length>0 && !chdir(path.join("")))
+      return false;
     let maxFileSize = maxFileSizeInDirectory(fs);
     let maxNumberOfDigits = numberOfDigits(maxFileSize);
     console.log(`Directory of Z:${getCurrentWorkingDirectoryPath()}.`)
@@ -61,17 +61,40 @@ function dir(...path){
           break;
       }
     });
-    if(path.length>0) 
-      chdir(oldPath);
+    if(path.length>0 && !chdir(oldPath)) 
+      return false;
+    return true;
 }
-function mkdir(...argname) {
-  let name = argname.join("");
-  let parentDir = new Directory("..",cwd.children);
+function directMkdir(name) {
   if(cwd.children.some((e)=>e.name===name)){
     console.log(`${name} already exists.`);
-    return;
+    return false;
   }
+  let parentDir = new Directory("..",cwd.children);
   cwd.children.push(new Directory(name,[parentDir]));
+  return true;
+}
+function mkdir(...argpath) {
+  let oldPath = getCurrentWorkingDirectoryPath();
+  let path = argpath.join("");
+  let accumulator = "";
+  for(c of path) {
+    if(c===' ') continue;
+    if(c==='/') {
+      if(accumulator.length>0){
+        if(!chdir(accumulator)){
+          directMkdir(accumulator);
+          chdir(accumulator);
+        }
+        accumulator="";
+      }
+      continue;
+    }
+    accumulator+=c;
+  }
+  if(accumulator.length>0 && !directMkdir(accumulator))
+    return false;
+  return chdir(oldPath);
 }
 
 function chdir(...argpath) {
@@ -89,7 +112,7 @@ function chdir(...argpath) {
         startingPoint = getDirectSubDirectory(startingPoint,accumulator);
         if(startingPoint===null) {
           console.log(`DIR ${path} NOT FOUND.`);
-          return;
+          return false;
         }
         if(accumulator!=="..")
           tempPath.push(accumulator);
@@ -105,7 +128,7 @@ function chdir(...argpath) {
     startingPoint = getDirectSubDirectory(startingPoint,accumulator);
     if(startingPoint===null) {
       console.log(`DIR ${path} NOT FOUND.`);
-      return;
+      return false;
     }
     if(accumulator!=="..")
       tempPath.push(accumulator);
@@ -113,6 +136,7 @@ function chdir(...argpath) {
       tempPath.pop();  }
   cwd = startingPoint;
   cwdPath = tempPath;
+  return true;
 }
 
 const commands = {
@@ -136,7 +160,7 @@ let cwd = fs;
 let cwdPath = [];
 
 mkdir("HELLO");
-eval("mkdir yo b");
+eval("mkdir yo b/b");
 eval("dir");
 eval("CD yob/");
 eval("mkdir b");
