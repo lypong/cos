@@ -92,8 +92,10 @@ function mkdir(...argpath) {
     }
     accumulator+=c;
   }
-  if(accumulator.length>0 && !directMkdir(accumulator))
+  if(accumulator.length>0 && !directMkdir(accumulator)){
+    chdir(oldPath);
     return false;
+  }
   return chdir(oldPath);
 }
 
@@ -101,9 +103,9 @@ function chdir(...argpath) {
   let path = argpath.join("");
   let isAbsolute = path[0]==='/';
   let startingPoint = cwd;
-  let tempPath
+  let tempPath;
   if(isAbsolute) {startingPoint = fs;tempPath = [];}
-  else tempPath = cwdPath.copyWithin();
+  else tempPath = [...cwdPath];
   let accumulator = "";
   for(c of path) {
     if(c===' ') continue;
