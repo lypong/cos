@@ -1,4 +1,4 @@
-const keywords = ["LET"];
+const keywords = ["LET","PRINT","REM"];
 const TokenType = {
   integer : "integer",
   word : "word",
@@ -117,14 +117,7 @@ class Parser {
     this.consume();
     return true;
   }
-  /*num() {
-    if(this.peek().type===TokenType.minus && this.peek(1).type===TokenType.integer)
-      return new Node(this.consume().type,0,this.consume().literal);
-    if(this.peek().type===TokenType.integer) 
-      return new Node(TokenType.plus,0,this.consume().literal);
-    return null;
-  }*/
-
+  //TODO support exponentiation
   factor() {
     let peek = this.peek();
     if (peek?.type===TokenType.openParen) {
@@ -177,7 +170,6 @@ class Parser {
       n.rhs = new Node(plusOrMinus.type,n.rhs,t);
       plusOrMinus = this.peek();
     }
-    //TODO Support more complex expr.
 
     return n;
   }
@@ -214,6 +206,61 @@ class Node{
     }
   }
 }
+class Program {
+  constructor() {
+    this.vars = {};
+  }
+  runStatement(tokens) {
+    let parser = new Parser(tokens);
+    let lineNumber = parser.consume();
+    if(lineNumber.type!=TokenType.integer) {
+      console.log(`Expected line number got ${lineNumber.asString()}`);
+      return;
+    }
+    let expr,evaluation;
+    let keyword = parser.consume(); 
+    switch(keyword.lexeme) {
+      case "LET":
+        let variableName = parser.consume();
+        if(variableName.type!==TokenType.word){
+          console.log(`Expected identifier got ${variableName.asString()}`);
+          return;
+        }
+        if(keywords.includes(variableName.lexeme)) {
+          console.log(`Expected var name got keyword instead : ${variableName.asString()}`);
+          return;
+        }
+        if(!parser.matchAndConsume(TokenType.equal)){
+          console.log(`Expected = after var name.`);
+          return;
+        }
+        expr = parser.expr();
+        evaluation = expr.evaluate()
+        if(evaluation===null) {
+          console.log(`Could not evaluate expression.`)
+          return;
+        }
+        this.vars[variableName.lexeme] = evaluation;
+        break;
+      case "PRINT":
+        expr = parser.expr();
+        evaluation = expr.evaluate()
+        if(evaluation===null) {
+          console.log(`Could not evaluate expression.`)
+          return;
+        }       
+        bPrint(evaluation);
+        break;
+      case "REM":
+        return;
+      default:
+        console.log(`Expected keyword got ${keyword}`);
+        return;
+    }
+    if(!parser.atEnd()) //TODO DELETE
+      console.log(`Tokens weren't entirely consumed.`);
+  }
+}
 function isDigit(c) {
   if(c===null)
     return false;
@@ -234,6 +281,9 @@ function isOperator(type) {
         return true;
   }
   return false;
+}
+function bPrint(...args){
+  console.log(...args);
 }
 
 function lex(code){
@@ -278,43 +328,14 @@ function lex(code){
   return tokens;
 }
 
-function parse(tokens){
-  let parser = new Parser(tokens);
-  let lineNumber = parser.consume();
-  if(lineNumber.type!=TokenType.integer) {
-    console.log(`Expected line number got ${lineNumber.asString()}`);
-    return;
-  }
-  let keyword = parser.consume(); 
-  switch(keyword.lexeme) {
-    case "LET":
-      let variableName = parser.consume();
-      if(variableName.type!==TokenType.word){
-        console.log(`Expected identifier got ${variableName.asString()}`);
-        return;
-      }
-      if(keywords.includes(variableName.lexeme)) {
-        console.log(`Expected var name got keyword instead : ${variableName.asString()}`);
-        return;
-      }
-      if(!parser.matchAndConsume(TokenType.equal)){
-        console.log(`Expected = after var name.`);
-        return;
-      }
-      let expr = parser.expr();
-      //TODO implement actual behaviour.
-      console.log(`I WILL make var : ${variableName.lexeme} equal to ${expr.evaluate()}`)
-      break;
-    default:
-      console.log(`Expected keyword got ${keyword}`);
-      return;
-  }
-  if(!parser.atEnd()) //TODO DELETE
-    console.log(`Tokens weren't entirely consumed.`); //TODO DELETE
-}
-
 console.log(lex("- + = <= <> <+ PRINTyak y12_a >= 1023 0"));
 let t = lex("10LETpip=(1+2)*8");
-console.log(t)
-console.log(parse(t));
+let t2 = lex("20PRINT3");
+let t3 = lex("30REMHELLOWORLD");
+let p = new Program();
+console.log(t);
+p.runStatement(t);
+p.runStatement(t2);
+p.runStatement(t3);
+console.log(p.vars);
 //console.log(parse(lex("10LETLET=4")));
