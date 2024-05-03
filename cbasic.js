@@ -126,11 +126,20 @@ class Parser {
   }*/
 
   factor() {
-    let number = this.peek();
-    if(number?.type!==TokenType.integer)
+    let peek = this.peek();
+    if (peek?.type===TokenType.openParen) {
+      this.consume();
+      let e = this.expr();
+      peek = this.peek();
+      if(peek?.type!==TokenType.closeParen)
+        return null;
+      this.consume();
+      return e;
+    }
+    if(peek?.type!==TokenType.integer)
       return null;
     this.consume();
-    return new Node(TokenType.plus,0,number.literal);
+    return new Node(TokenType.plus,0,peek.literal);
   }
 
   term() {
@@ -156,8 +165,8 @@ class Parser {
       this.consume();
       lhs = new Node(TokenType.minus,0,this.term());
     }
-    else
-      lhs = this.term(); */
+    else*/
+    lhs = this.term(); 
     let n = lhs;
     let plusOrMinus = this.peek();
     while(plusOrMinus?.type === TokenType.plus || plusOrMinus?.type === TokenType.minus){
@@ -305,6 +314,7 @@ function parse(tokens){
 }
 
 console.log(lex("- + = <= <> <+ PRINTyak y12_a >= 1023 0"));
-console.log(lex("10LETLET=4"))
-console.log(parse(lex("10LETpip=2*8?2")));
+let t = lex("10LETpip=(1+2)*8");
+console.log(t)
+console.log(parse(t));
 //console.log(parse(lex("10LETLET=4")));
