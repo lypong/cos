@@ -112,24 +112,65 @@ class Parser {
     return this.tokens[this.position+offset];
   }
   matchAndConsume(t) {
-    if(this.peek().type!==t)
+    if(this.peek()?.type!==t)
       return false;
     this.consume();
     return true;
   }
-  num() {
+  /*num() {
     if(this.peek().type===TokenType.minus && this.peek(1).type===TokenType.integer)
       return new Node(this.consume().type,0,this.consume().literal);
     if(this.peek().type===TokenType.integer) 
       return new Node(TokenType.plus,0,this.consume().literal);
     return null;
+  }*/
+
+  factor() {
+    let number = this.peek();
+    if(number?.type!==TokenType.integer)
+      return null;
+    this.consume();
+    return new Node(TokenType.plus,0,number.literal);
+  }
+
+  term() {
+    let lhs = this.factor();
+    let multOrDiv = this.peek();
+    let n = lhs;
+    while(multOrDiv?.type === TokenType.mult || multOrDiv?.type === TokenType.div) {
+      this.consume();
+      let f = this.factor();
+      if(f===null)
+        return null;
+      n.rhs = new Node(multOrDiv.type,n.rhs,f);
+      multOrDiv = this.peek();
+    }
+    return n;
   }
 
   expr() {
-    let lhs = this.num();
+    let unaryMinus = this.peek();
+    let lhs;
+    // TODO add support for unary operator '-'
+    /*if(unaryMinus?.type===TokenType.minus) {
+      this.consume();
+      lhs = new Node(TokenType.minus,0,this.term());
+    }
+    else
+      lhs = this.term(); */
+    let n = lhs;
+    let plusOrMinus = this.peek();
+    while(plusOrMinus?.type === TokenType.plus || plusOrMinus?.type === TokenType.minus){
+      this.consume();
+      let t = this.term();
+      if(t===null)
+        return null;
+      n.rhs = new Node(plusOrMinus.type,n.rhs,t);
+      plusOrMinus = this.peek();
+    }
     //TODO Support more complex expr.
 
-    return lhs;
+    return n;
   }
 }
 class Node{
@@ -265,5 +306,5 @@ function parse(tokens){
 
 console.log(lex("- + = <= <> <+ PRINTyak y12_a >= 1023 0"));
 console.log(lex("10LETLET=4"))
-console.log(parse(lex("10LETpip=4")));
+console.log(parse(lex("10LETpip=2*8?2")));
 //console.log(parse(lex("10LETLET=4")));
