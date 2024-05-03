@@ -1,4 +1,4 @@
-const keywords = ["LET","PRINT","REM"];
+const keywords = ["LET","PRINT","REM","END","GOTO"];
 const TokenType = {
   integer : "integer",
   word : "word",
@@ -206,9 +206,55 @@ class Node{
     }
   }
 }
+class Line {
+  constructor(source,tokens,lineNumber){
+    this.source = source;
+    this.tokens = tokens;
+    this.lineNumber = lineNumber;
+  }
+}
 class Program {
   constructor() {
     this.vars = {};
+    this.lines = {};
+    this.instructionPointer = 0;
+    this.ended = false;
+  }
+  writeLine(source) {
+    let tokens = lex(source);
+    let parser = new Parser(tokens);
+    let lineNumber = parser.peek();
+    if(lineNumber?.type!==TokenType.integer) {
+      console.log("No line number was provided. Please provide one.");
+      return false;
+    }
+    this.lines[lineNumber.lexeme] = new Line(source,tokens,lineNumber.literal);
+    return true;
+  }
+  goTo(lineNumber) {
+    //TODO binary search. If line number not found, goto the nearest after
+    let low = 0;
+    let high = this.OrderedLines.length;
+    let mid = low+Math.floor((high-low)/2);
+    while(this.OrderedLines[mid].lineNumber!==lineNumber){
+      if(high-1<=low) {
+        this.instructionPointer=mid+1;
+        return;
+      }
+      if(this.OrderedLines[mid].lineNumber<lineNumber)
+        low = mid;
+      else
+        high = mid;
+      mid = low+Math.floor((high-low)/2);
+    }
+    this.instructionPointer=mid;
+  }
+  runProgram() {
+    this.OrderedLines = Object.values(this.lines);
+    this.OrderedLines.sort((a,b)=>a.lineNumber-b.lineNumber);
+    while(this.instructionPointer<this.OrderedLines.length&&!this.ended){
+      this.runStatement(this.OrderedLines[this.instructionPointer++].tokens);
+    }
   }
   runStatement(tokens) {
     let parser = new Parser(tokens);
@@ -250,6 +296,17 @@ class Program {
           return;
         }       
         bPrint(evaluation);
+        break;
+      case "END":
+        this.ended = true;
+        break;
+      case "GOTO":
+        let lineNumber = parser.consume();
+        if(lineNumber?.type!==TokenType.integer) {
+          console.log("Expected line number after GOTO");
+          return;
+        }
+        this.goTo(lineNumber.literal);
         break;
       case "REM":
         return;
@@ -333,9 +390,11 @@ let t = lex("10LETpip=(1+2)*8");
 let t2 = lex("20PRINT3");
 let t3 = lex("30REMHELLOWORLD");
 let p = new Program();
-console.log(t);
-p.runStatement(t);
-p.runStatement(t2);
-p.runStatement(t3);
-console.log(p.vars);
+p.writeLine("30REMHELLOWORLD");
+p.writeLine("20PRINT2");
+p.writeLine("10PRINT1");
+p.writeLine("30PRINT3");
+p.writeLine("25END");
+p.writeLine("24GOTO10");
+p.runProgram();
 //console.log(parse(lex("10LETLET=4")));
