@@ -1,4 +1,4 @@
-const keywords = ["LET","PRINT","REM","END","GOTO","IF","THEN","GOSUB","RETURN"];
+const keywords = ["LET","PRINT","REM","END","GOTO","IF","THEN","GOSUB","RETURN","FOR","TO","STEP","NEXT"];
 const TokenType = {
   integer : "integer",
   word : "word",
@@ -226,11 +226,20 @@ class Line {
     this.lineNumber = lineNumber;
   }
 }
+class For {
+  constructor(start,variableName,to,step){
+    this.start = start;
+    this.variableName = variableName;
+    this.to = to;
+    this.step = step;
+  }
+}
 class Program {
   constructor() {
     this.vars = {};
     this.lines = {};
     this.goSubStack = [];
+    this.forStack = [];
     this.instructionPointer = 0;
     this.ended = false;
   }
@@ -279,11 +288,11 @@ class Program {
       console.log(`Expected line number got ${lineNumber.asString()}`);
       return;
     }
-    let expr,evaluation;
+    let expr,evaluation,variableName;
     let keyword = parser.consume(); 
     switch(keyword.lexeme) {
       case "LET":
-        let variableName = parser.consume();
+        variableName = parser.consume();
         if(variableName.type!==TokenType.word){
           console.log(`Expected identifier got ${variableName.asString()}`);
           return;
@@ -369,6 +378,73 @@ class Program {
         if(ok)
           this.goTo(lineNumber.literal);
         break;
+      case "FOR": //TODO CHECK FOR NULL
+        variableName = parser.consume();
+        if(variableName.type!==TokenType.word){
+          console.log(`Expected identifier got ${variableName.asString()}`);
+          return;
+        }
+        if(keywords.includes(variableName.lexeme)) {
+          console.log(`Expected var name got keyword instead : ${variableName.asString()}`);
+          return;
+        }
+        if(!parser.matchAndConsume(TokenType.equal)){
+          console.log(`Expected = after var name.`);
+          return;
+        }
+        expr = parser.expr();
+        evaluation = expr.evaluate(this.vars);
+        if(evaluation===null) {
+          console.log(`Could not evaluate expression.`)
+          return;
+        }
+        let toKeyword = parser.consume();
+        if(toKeyword?.lexeme!=="TO") {
+          console.log(`Expected keyword TO got ${toKeyword.lexeme}`);
+          return;
+        }
+        let toExpr = parser.expr();
+        let toEvaluation = toExpr.evaluate(this.args);
+        let stepKeyword = parser.peek();
+        let stepEvaluation = 1;
+        if(stepKeyword?.lexeme === "STEP"){
+          parser.consume();
+          //TODO is step evaluated everytime?
+          let stepExpr = parser.expr();
+          stepEvaluation = stepExpr.evaluate(this.args);
+        }
+        this.vars[variableName.lexeme] = evaluation;
+        this.forStack.push(new For(this.instructionPointer,variableName.lexeme,toEvaluation,stepEvaluation));
+        //TODO handle skip
+        break;
+      case "NEXT":
+        variableName = parser.consume();
+        if(variableName.type!==TokenType.word){
+          console.log(`Expected identifier got ${variableName.asString()}`);
+          return;
+        }
+        if(keywords.includes(variableName.lexeme)) {
+          console.log(`Expected var name got keyword instead : ${variableName.asString()}`);
+          return;
+        }
+        let topOfStack = this.forStack[this.forStack.length-1];
+        if(topOfStack?.variableName !== variableName.lexeme){
+          console.log(`NEXT statement does not match with FOR ${topOfStack?.variableName}<>${variableName.lexeme}`);
+          return;
+        }
+        this.vars[variableName.lexeme] += topOfStack.step;
+        if(topOfStack.step>0) {
+          if(this.vars[variableName.lexeme]>topOfStack.to)
+            this.forStack.pop();
+          else
+            this.instructionPointer = topOfStack.start;
+        } else {
+          if(this.vars[variableName.lexeme]<topOfStack.to)
+            this.forStack.pop();
+          else
+            this.instructionPointer = topOfStack.start;
+        }
+        break;
       case "REM":
         return;
       default:
@@ -451,9 +527,10 @@ let t = lex("10LETpip=(1+2)*8");
 let t2 = lex("20PRINT3");
 let t3 = lex("30REMHELLOWORLD");
 let p = new Program();
-p.writeLine("10LETP=0");
-p.writeLine("20PRINTP");
-p.writeLine("30LETP=P+1");
-p.writeLine("40IFP<10THEN20");
+p.writeLine("10 FOR P=1 TO 10");
+p.writeLine("15 FOR C=1 TO 10");
+p.writeLine("20 PRINT P*C");
+p.writeLine("25 NEXT C");
+p.writeLine("30 NEXT P");
 p.runProgram();
 //console.log(lex("24GOTO11"));
