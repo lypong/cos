@@ -238,7 +238,9 @@ class Program {
     let mid = low+Math.floor((high-low)/2);
     while(this.OrderedLines[mid].lineNumber!==lineNumber){
       if(high-1<=low) {
-        this.instructionPointer=mid+1;
+        this.instructionPointer=mid;
+        if(this.OrderedLines[mid].lineNumber<lineNumber)
+          this.instructionPointer++;
         return;
       }
       if(this.OrderedLines[mid].lineNumber<lineNumber)
@@ -397,4 +399,4 @@ p.writeLine("30PRINT3");
 p.writeLine("25END");
 p.writeLine("24GOTO10");
 p.runProgram();
-//console.log(parse(lex("10LETLET=4")));
+//console.log(lex("24GOTO11"));
