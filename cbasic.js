@@ -414,8 +414,15 @@ class Program {
           stepEvaluation = stepExpr.evaluate(this.args);
         }
         this.vars[variableName.lexeme] = evaluation;
-        this.forStack.push(new For(this.instructionPointer,variableName.lexeme,toEvaluation,stepEvaluation));
-        //TODO handle skip
+        if((stepEvaluation>0&&evaluation>toEvaluation)||(stepEvaluation<0&&evaluation<toEvaluation)) {
+          while(this.OrderedLines[++this.instructionPointer]?.tokens[1]?.lexeme!=="NEXT"||this.OrderedLines[this.instructionPointer]?.tokens[2]?.lexeme!==variableName.lexeme)
+            if(this.instructionPointer>=this.OrderedLines.length){
+              console.log("No corresponding NEXT statement found");
+              return;
+            }
+          this.instructionPointer++; //skips next
+        } else
+          this.forStack.push(new For(this.instructionPointer,variableName.lexeme,toEvaluation,stepEvaluation));
         break;
       case "NEXT":
         variableName = parser.consume();
@@ -527,10 +534,11 @@ let t = lex("10LETpip=(1+2)*8");
 let t2 = lex("20PRINT3");
 let t3 = lex("30REMHELLOWORLD");
 let p = new Program();
-p.writeLine("10 FOR P=1 TO 10");
+p.writeLine("10 FOR P=1 TO 10")
 p.writeLine("15 FOR C=1 TO 10");
-p.writeLine("20 PRINT P*C");
+p.writeLine("20 PRINT C");
 p.writeLine("25 NEXT C");
-p.writeLine("30 NEXT P");
+p.writeLine("26 NEXT P");
+p.writeLine("30 PRINT 1")
 p.runProgram();
 //console.log(lex("24GOTO11"));
