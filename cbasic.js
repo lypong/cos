@@ -66,10 +66,10 @@ class Lexer {
     this.consume();
     return true;
   }
-  word(c){
+  word(){
     let start = this.position-1;
     let peek = this.peek();
-    let sub;
+    let sub = this.code[start];
     while(isLetter(peek)||isDigit(peek)||peek==='_'){
       this.consume();
       sub = this.code.substring(start,this.position);
@@ -82,7 +82,7 @@ class Lexer {
     }
     return new Token(TokenType.word,sub);
   }
-  integer(c){
+  integer(){
     let start = this.position-1;
     let peek = this.peek();
     while(isDigit(peek)){
@@ -451,18 +451,9 @@ let t = lex("10LETpip=(1+2)*8");
 let t2 = lex("20PRINT3");
 let t3 = lex("30REMHELLOWORLD");
 let p = new Program();
-p.writeLine("30REMHELLOWORLD");
-p.writeLine("20PRINT2");
-p.writeLine("10PRINT1");
-p.writeLine("11GOSUB40");
-p.writeLine("21IF1<2THEN30")
-p.writeLine("30PRINT3");
-p.writeLine("31END");
-p.writeLine("24GOTO10");
-p.writeLine("40 PRINT 40");
-p.writeLine("45LETpip=12");
-p.writeLine("46LETpip=2+1*3");
-p.writeLine("49PRINTpip*10");
-p.writeLine("50RETURN");
+p.writeLine("10LETP=0");
+p.writeLine("20PRINTP");
+p.writeLine("30LETP=P+1");
+p.writeLine("40IFP<10THEN20");
 p.runProgram();
 //console.log(lex("24GOTO11"));
