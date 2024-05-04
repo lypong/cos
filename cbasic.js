@@ -16,6 +16,7 @@ const TokenType = {
   openParen : "openParen",
   closeParen : "closeParen",
 }
+const nodeGetVar = "getVar";
 const singleCharacterTokens = {
   '=' : TokenType.equal,
   '+' : TokenType.plus,
@@ -120,7 +121,7 @@ class Parser {
     this.consume();
     return true;
   }
-  //TODO support exponentiation
+  //TODO support exponentiation. refactor to use switch statement.
   factor() {
     let peek = this.peek();
     if (peek?.type===TokenType.openParen) {
@@ -132,6 +133,12 @@ class Parser {
       this.consume();
       return e;
     }
+    if(peek?.type===TokenType.word){
+      if(keywords.includes(peek.lexeme))
+        return null;
+      this.consume();
+      return new Node(nodeGetVar,peek.lexeme);
+    }
     if(peek?.type!==TokenType.integer)
       return null;
     this.consume();
@@ -141,7 +148,7 @@ class Parser {
   term() {
     let lhs = this.factor();
     let multOrDiv = this.peek();
-    let n = lhs;
+    let n = new Node(TokenType.mult,lhs,1);
     while(multOrDiv?.type === TokenType.mult || multOrDiv?.type === TokenType.div) {
       this.consume();
       let f = this.factor();
@@ -163,7 +170,7 @@ class Parser {
     }
     else*/
     lhs = this.term(); 
-    let n = lhs;
+    let n = new Node(TokenType.plus,lhs,0);
     let plusOrMinus = this.peek();
     while(plusOrMinus?.type === TokenType.plus || plusOrMinus?.type === TokenType.minus){
       this.consume();
@@ -183,18 +190,21 @@ class Node{
     this.lhs = lhs;
     this.rhs = rhs;
   }
-  evaluate(){
+  evaluate(vars){
     let evaluatedLhs;
     let evaluatedRhs;
     if(this.lhs.evaluate===undefined)
       evaluatedLhs = this.lhs;
     else
-      evaluatedLhs = this.lhs.evaluate();
+      evaluatedLhs = this.lhs.evaluate(vars);
 
+    // rhs can be undefined with operator nodeGetVar;
+    if(this.operator === nodeGetVar)
+      return vars[this.lhs] ?? 0;
     if(this.rhs.evaluate===undefined)
       evaluatedRhs = this.rhs;
     else
-      evaluatedRhs = this.rhs.evaluate();
+      evaluatedRhs = this.rhs.evaluate(vars);
     switch(this.operator) {
       case TokenType.plus:
         return evaluatedLhs+evaluatedRhs;
@@ -287,7 +297,7 @@ class Program {
           return;
         }
         expr = parser.expr();
-        evaluation = expr.evaluate()
+        evaluation = expr.evaluate(this.vars);
         if(evaluation===null) {
           console.log(`Could not evaluate expression.`)
           return;
@@ -296,7 +306,7 @@ class Program {
         break;
       case "PRINT":
         expr = parser.expr();
-        evaluation = expr.evaluate()
+        evaluation = expr.evaluate(this.vars);
         if(evaluation===null) {
           console.log(`Could not evaluate expression.`)
           return;
@@ -320,9 +330,9 @@ class Program {
         this.goTo(lineNumber.literal);
         break;
       case "IF":
-        evaluation = parser.expr().evaluate();
+        evaluation = parser.expr().evaluate(this.vars);
         let relational = parser.consume();
-        let evaluationRhs = parser.expr().evaluate();
+        let evaluationRhs = parser.expr().evaluate(this.vars);
         let thenKeyword = parser.consume();
         if(thenKeyword?.lexeme!=="THEN"){
           console.log("Expected THEN after comparison.");
@@ -450,6 +460,9 @@ p.writeLine("30PRINT3");
 p.writeLine("31END");
 p.writeLine("24GOTO10");
 p.writeLine("40 PRINT 40");
+p.writeLine("45LETpip=12");
+p.writeLine("46LETpip=2+1*3");
+p.writeLine("49PRINTpip*10");
 p.writeLine("50RETURN");
 p.runProgram();
 //console.log(lex("24GOTO11"));
