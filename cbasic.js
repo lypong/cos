@@ -1,4 +1,4 @@
-const keywords = ["LET","PRINT","REM","END","GOTO","IF","THEN"];
+const keywords = ["LET","PRINT","REM","END","GOTO","IF","THEN","GOSUB","RETURN"];
 const TokenType = {
   integer : "integer",
   word : "word",
@@ -220,6 +220,7 @@ class Program {
   constructor() {
     this.vars = {};
     this.lines = {};
+    this.goSubStack = [];
     this.instructionPointer = 0;
     this.ended = false;
   }
@@ -305,6 +306,11 @@ class Program {
       case "END":
         this.ended = true;
         break;
+      case "RETURN":
+        this.goTo(this.goSubStack.pop());
+        break;
+      case "GOSUB":
+        this.goSubStack.push(this.OrderedLines[this.instructionPointer].lineNumber);
       case "GOTO":
         lineNumber = parser.consume();
         if(lineNumber?.type!==TokenType.integer) {
@@ -438,9 +444,12 @@ let p = new Program();
 p.writeLine("30REMHELLOWORLD");
 p.writeLine("20PRINT2");
 p.writeLine("10PRINT1");
+p.writeLine("11GOSUB40");
 p.writeLine("21IF1<2THEN30")
 p.writeLine("30PRINT3");
-p.writeLine("25END");
+p.writeLine("31END");
 p.writeLine("24GOTO10");
+p.writeLine("40 PRINT 40");
+p.writeLine("50RETURN");
 p.runProgram();
 //console.log(lex("24GOTO11"));
