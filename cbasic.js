@@ -1,4 +1,4 @@
-const keywords = ["LET","PRINT","REM","END","GOTO"];
+const keywords = ["LET","PRINT","REM","END","GOTO","IF","THEN"];
 const TokenType = {
   integer : "integer",
   word : "word",
@@ -68,15 +68,18 @@ class Lexer {
   word(c){
     let start = this.position-1;
     let peek = this.peek();
+    let sub;
     while(isLetter(peek)||isDigit(peek)||peek==='_'){
       this.consume();
-      if(!this.lexedKeyword&&keywords.includes(this.code.substring(start,this.position))){
-        this.lexedKeyword = true;
-        return new Token(TokenType.word,this.code.substring(start,this.position));
+      sub = this.code.substring(start,this.position);
+      if(!this.lexedKeyword&&keywords.includes(sub)){
+        if(sub!=="IF"&&sub!=="FOR"&&sub!=="TO")
+          this.lexedKeyword = true;
+        return new Token(TokenType.word,sub);
       }
       peek = this.peek();
     }
-    return new Token(TokenType.word,this.code.substring(start,this.position));
+    return new Token(TokenType.word,sub);
   }
   integer(c){
     let start = this.position-1;
@@ -303,12 +306,52 @@ class Program {
         this.ended = true;
         break;
       case "GOTO":
-        let lineNumber = parser.consume();
+        lineNumber = parser.consume();
         if(lineNumber?.type!==TokenType.integer) {
           console.log("Expected line number after GOTO");
           return;
         }
         this.goTo(lineNumber.literal);
+        break;
+      case "IF":
+        evaluation = parser.expr().evaluate();
+        let relational = parser.consume();
+        let evaluationRhs = parser.expr().evaluate();
+        let thenKeyword = parser.consume();
+        if(thenKeyword?.lexeme!=="THEN"){
+          console.log("Expected THEN after comparison.");
+          return;
+        }
+        lineNumber = parser.consume();
+        if(lineNumber?.type!==TokenType.integer) {
+          console.log("Expected line number after GOTO");
+          return;
+        }
+        let ok;
+        switch(relational?.type){
+          case TokenType.less:
+            ok = evaluation<evaluationRhs
+            break;
+          case TokenType.greater:
+            ok = evaluation>evaluationRhs;
+            break;
+          case TokenType.lessOrEqual:
+            ok = evaluation<=evaluationRhs;
+            break;
+          case TokenType.greaterOrEqual:
+            ok = evaluation>=evaluationRhs;
+            break;
+          case TokenType.equal:
+            ok = evaluation===evaluationRhs;
+            break;
+          case TokenType.notEqual:
+            ok = evaluation!==evaluationRhs;
+            break;
+          default:
+            console.log(`Expected relational got ${relational?.asString}`);
+        }
+        if(ok)
+          this.goTo(lineNumber.literal);
         break;
       case "REM":
         return;
@@ -395,6 +438,7 @@ let p = new Program();
 p.writeLine("30REMHELLOWORLD");
 p.writeLine("20PRINT2");
 p.writeLine("10PRINT1");
+p.writeLine("21IF1<2THEN30")
 p.writeLine("30PRINT3");
 p.writeLine("25END");
 p.writeLine("24GOTO10");
