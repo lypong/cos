@@ -10,12 +10,12 @@ class Parser {
       offset = 0;
     return this.position + offset >=this.tokens.length;
   }
-  consume() : Token {
+  consume() : Token|null {
     if (this.atEnd())
       return null;
     return this.tokens[this.position++];
   }
-  peek(offset?:number) : Token {
+  peek(offset?:number) : Token|null {
     if(offset === undefined)
       offset = 0;
     if(this.atEnd(offset))
@@ -29,7 +29,7 @@ class Parser {
     return true;
   }
   //TODO support exponentiation.
-  factor() : BNode {
+  factor() : BNode|null {
     let peek = this.peek();
     let unaryMinus = this.matchAndConsume(TokenType.minus);
     if(unaryMinus) {
@@ -60,8 +60,10 @@ class Parser {
     }
   }
 
-  term() : BNode {
+  term() : BNode|null {
     let lhs = this.factor();
+    if(lhs===null)
+      return null;
     let multOrDiv = this.peek();
     let n = new BNode(TokenType.mult,lhs,1);
     while(multOrDiv?.type === TokenType.mult || multOrDiv?.type === TokenType.div) {
@@ -69,15 +71,17 @@ class Parser {
       let f = this.factor();
       if(f===null)
         return null;
-      n.rhs = new BNode(multOrDiv.type,n.rhs,f);
+      n.rhs = new BNode(multOrDiv.type,n.rhs as number|BNode,f);
       multOrDiv = this.peek();
     }
     return n;
   }
 
-  expr() : BNode {
+  expr() : BNode|null {
     let lhs;
     lhs = this.term(); 
+    if(lhs===null)
+      return null;
     let n = new BNode(TokenType.plus,lhs,0);
     let plusOrMinus = this.peek();
     while(plusOrMinus?.type === TokenType.plus || plusOrMinus?.type === TokenType.minus){
@@ -85,7 +89,7 @@ class Parser {
       let t = this.term();
       if(t===null)
         return null;
-      n.rhs = new BNode(plusOrMinus.type,n.rhs,t);
+      n.rhs = new BNode(plusOrMinus.type,n.rhs as number|BNode,t);
       plusOrMinus = this.peek();
     }
 

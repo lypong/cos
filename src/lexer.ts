@@ -10,7 +10,7 @@ class Lexer {
   lex() : Token[]{
     let tokens = [];
     while(!this.atEnd()) {
-      let c = this.consume();
+      let c = this.consume() as string;
       switch(c) {
         case '<':
           if(this.matchAndConsume('='))
@@ -37,8 +37,9 @@ class Lexer {
           tokens.push(this.label());
           break;
         default:
-          if(singleCharacterTokens[c]!==undefined)
-            tokens.push(new Token(singleCharacterTokens[c],c));
+          let s = singleCharacterTokens[c as keyof typeof singleCharacterTokens];
+          if(s!==undefined)
+            tokens.push(new Token(s,c));
           else if(isLetter(c))
             tokens.push(this.word());
           else if(isDigit(c)&&c!='0')
@@ -55,12 +56,12 @@ class Lexer {
       offset = 0;
     return this.position + offset >=this.code.length;
   }
-  consume() : string {
+  consume() : string|null {
     if (this.atEnd())
       return null;
     return this.code[this.position++];
   }
-  peek(offset? : number) : string {
+  peek(offset? : number) : string|null {
     if(offset === undefined)
       offset = 0;
     if(this.atEnd(offset))
@@ -77,7 +78,8 @@ class Lexer {
     let start = this.position-1;
     let peek = this.peek();
     let sub = this.code[start];
-    while(isLetter(peek)||isDigit(peek)||peek==='_'){
+    // if peek is null condition won't be met.
+    while(isLetter(peek as string)||isDigit(peek as string)||peek==='_'){
       this.consume();
       sub = this.code.substring(start,this.position);
       if(!this.lexedKeyword&&keywords.includes(sub)){
@@ -92,7 +94,8 @@ class Lexer {
   integer() : Token{
     let start = this.position-1;
     let peek = this.peek();
-    while(isDigit(peek)){
+    // if peek is null condition won't be met.
+    while(isDigit(peek as string)){
       this.consume();
       peek = this.peek();
     }
