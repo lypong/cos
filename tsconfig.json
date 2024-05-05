@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+      "outFile": "./built/bundle.js",
+      "allowJs": true,
+      "target": "ES2017"
+    },
+    "include": ["./src/**/*"]
+  }
