@@ -133,28 +133,36 @@ class Parser {
     this.consume();
     return true;
   }
-  //TODO support exponentiation. refactor to use switch statement.
+  //TODO support exponentiation.
   factor() {
     let peek = this.peek();
-    if (peek?.type===TokenType.openParen) {
-      this.consume();
-      let e = this.expr();
-      peek = this.peek();
-      if(peek?.type!==TokenType.closeParen)
+    let unaryMinus = this.matchAndConsume(TokenType.minus);
+    if(unaryMinus) {
+      let f = this.factor();
+      if(f===null) {
         return null;
-      this.consume();
-      return e;
+      }
+      return new Node(TokenType.mult,-1,f);
     }
-    if(peek?.type===TokenType.word){
-      if(keywords.includes(peek.lexeme))
-        return null;
-      this.consume();
-      return new Node(nodeGetVar,peek.lexeme);
+    switch(peek?.type) {
+      case TokenType.openParen:
+        this.consume();
+        let e = this.expr();
+        peek = this.peek();
+        if(peek?.type!==TokenType.closeParen)
+          return null;
+        this.consume();
+        return e;
+      case TokenType.word:
+        if(keywords.includes(peek.lexeme))
+          return null;
+        this.consume();
+        return new Node(nodeGetVar,peek.lexeme);
+      case TokenType.integer:
+        this.consume();
+        return new Node(TokenType.plus,0,peek.literal);
+      default: return null;
     }
-    if(peek?.type!==TokenType.integer)
-      return null;
-    this.consume();
-    return new Node(TokenType.plus,0,peek.literal);
   }
 
   term() {
@@ -173,14 +181,7 @@ class Parser {
   }
 
   expr() {
-    let unaryMinus = this.peek();
     let lhs;
-    // TODO add support for unary operator '-'
-    /*if(unaryMinus?.type===TokenType.minus) {
-      this.consume();
-      lhs = new Node(TokenType.minus,0,this.term());
-    }
-    else*/
     lhs = this.term(); 
     let n = new Node(TokenType.plus,lhs,0);
     let plusOrMinus = this.peek();
@@ -267,7 +268,6 @@ class Program {
     return true;
   }
   goTo(lineNumber) {
-    //TODO binary search. If line number not found, goto the nearest after
     let low = 0;
     let high = this.OrderedLines.length;
     let mid = low+Math.floor((high-low)/2);
@@ -436,7 +436,6 @@ class Program {
         let stepEvaluation = 1;
         if(stepKeyword?.lexeme === "STEP"){
           parser.consume();
-          //TODO is step evaluated everytime?
           let stepExpr = parser.expr();
           stepEvaluation = stepExpr.evaluate(this.args);
         }
@@ -566,7 +565,7 @@ let t3 = lex("30REMHELLOWORLD");
 let p = new Program();
 p.writeLine("10 FOR P=1 TO 10")
 p.writeLine("15 FOR C=1 TO 10");
-p.writeLine('20 PRINT "C="C');
+p.writeLine('20 PRINT "-C="-C-2*5');
 p.writeLine("25 NEXT C");
 p.writeLine("26 NEXT P");
 p.writeLine("30 PRINT 1")
