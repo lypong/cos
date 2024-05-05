@@ -36,6 +36,13 @@ class Program {
     this.instructionPointer = 0;
     this.ended = false;
   }
+  partialReset() {
+    this.vars = {};
+    this.goSubStack = [];
+    this.forStack = [];
+    this.instructionPointer = 0;
+    this.ended = false;
+  }
   crash(errorMessage: string) {
     if(this.OrderedLines===undefined||this.OrderedLines[this.instructionPointer]===undefined)
       bPrint(errorMessage);
@@ -84,6 +91,7 @@ class Program {
     while(this.instructionPointer<this.OrderedLines.length&&!this.ended){
       this.runStatement(this.OrderedLines[this.instructionPointer++].tokens);
     }
+    this.partialReset();
   }
   runStatement(tokens: Token[]) : boolean{
     let parser = new Parser(tokens);
