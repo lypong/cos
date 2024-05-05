@@ -85,10 +85,11 @@ class Program {
       if(lineNumber===null)
         console.log("Wanted line number but tokens are empty");
       else
-        console.log(`Expected line number got ${lineNumber.asString()}`);
+        console.log(`Expected line number got ${lineNumber.lexeme}`);
       return false;
     }
     let expr,evaluation,variableName;
+    let goSub = false;
     let keyword = parser.consume();
     if(keyword===null){
       console.log("Wanted keyword but tokens are empty");
@@ -101,11 +102,11 @@ class Program {
           if(variableName===null)
             console.log("Wanted variable name but tokens are empty");
           else
-            console.log(`Expected identifier got ${variableName.asString()}`);
+            console.log(`Expected identifier got ${variableName.lexeme}`);
           return false;
         }
         if(keywords.includes((variableName as Token).lexeme)) {
-          console.log(`Expected variable name name got keyword instead : ${(variableName as Token).asString()}`);
+          console.log(`Expected variable name name got keyword instead : ${(variableName as Token).lexeme}`);
           return false;
         }
         if(!parser.matchAndConsume(TokenType.equal)){
@@ -144,16 +145,31 @@ class Program {
         if(evaluation===null) {
           console.log("Could not evaluate expression");
           return false;
-        }      
+        }
+        if(!parser.atEnd()) {
+          console.log("Invalid expression");
+          this.ended = true;
+          return false;
+        }  
         bPrint(`${literal}${evaluation}`);
         break;
       case "END":
+        if(!parser.atEnd()) {
+          console.log("There shall be nothing after END");
+          this.ended = true;
+          return false;
+        }
         this.ended = true;
         break;
       case "RETURN":
         let pop = this.goSubStack.pop();
         if(pop===undefined) {
           console.log("Could not return because return stack is empty");
+          return false;
+        }
+        if(!parser.atEnd()) {
+          console.log("There shall be nothing after RETURN");
+          this.ended = true;
           return false;
         }
         this.goTo(pop);
@@ -163,13 +179,20 @@ class Program {
           console.log("BUG: Lines are not sorted out");
           return false;
         }
-        this.goSubStack.push(this.OrderedLines[this.instructionPointer].lineNumber);
+        goSub = true;
       case "GOTO":
         lineNumber = parser.consume();
         if(lineNumber?.type!==TokenType.integer) {
           console.log("Expected line number after GOTO");
           return false;
         }
+        if(!parser.atEnd()) {
+          console.log("There shall be nothing after line number");
+          this.ended = true;
+          return false;
+        }
+        if(goSub)
+          this.goSubStack.push((this.OrderedLines as Line[])[this.instructionPointer].lineNumber);
         this.goTo((lineNumber as Token).literal as number);
         break;
       case "IF":
@@ -205,9 +228,9 @@ class Program {
         lineNumber = parser.consume();
         if(lineNumber?.type!==TokenType.integer) {
           if(lineNumber?.lexeme===null)
-            console.log("Expected line number after GOTO");
+            console.log("Expected line number after THEN");
           else
-            console.log(`Expected line number after GOTO got ${lineNumber?.lexeme}`);
+            console.log(`Expected line number after THEN got ${lineNumber?.lexeme}`);
           return false;
         }
         let ok;
@@ -232,6 +255,11 @@ class Program {
             break;
           default:
             console.log(`Expected relational got ${relational?.asString}`);
+        }
+        if(!parser.atEnd()) {
+          console.log("There shall be nothing after line number");
+          this.ended = true;
+          return false;
         }
         if(ok)
           this.goTo(lineNumber.literal as number);
@@ -297,11 +325,16 @@ class Program {
           }
           stepEvaluation = e;
         }
-        this.vars[(variableName as Token).lexeme] = evaluation;
+        if(!parser.atEnd()) {
+          console.log("Invalid expression");
+          this.ended = true;
+          return false;
+        }
         if(this.OrderedLines===undefined) {
           console.log("BUG: Lines are not sorted out");
           return false;
         }
+        this.vars[(variableName as Token).lexeme] = evaluation;
         if((stepEvaluation>0&&evaluation>toEvaluation)||(stepEvaluation<0&&evaluation<toEvaluation)) {
           while(this.OrderedLines[++this.instructionPointer]?.tokens[1]?.lexeme!=="NEXT"||this.OrderedLines[this.instructionPointer]?.tokens[2]?.lexeme!==(variableName as Token).lexeme)
             if(this.instructionPointer>=this.OrderedLines.length){
@@ -333,6 +366,11 @@ class Program {
             console.log(`NEXT statement does not match with FOR ${topOfStack?.variableName}<>${(variableName as Token).lexeme}`);
           return false;
         }
+        if(!parser.atEnd()) {
+          console.log("There shall be nothing after variable name");
+          this.ended = true;
+          return false;
+        }
         this.vars[(variableName as Token).lexeme] += topOfStack.step;
         if(topOfStack.step>0) {
           if(this.vars[(variableName as Token).lexeme]>topOfStack.to)
@@ -352,8 +390,9 @@ class Program {
         console.log(`Expected keyword got ${keyword}`);
         return false;
     }
-    if(!parser.atEnd()) {//TODO DELETE
-      console.log(`Tokens weren't entirely consumed.`);
+    if(!parser.atEnd()) {
+      console.log("BUG: Tokens weren't entirely consumed.");
+      this.ended = true;
       return false;
     }
     return true;
