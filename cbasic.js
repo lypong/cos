@@ -1,6 +1,7 @@
 const keywords = ["LET","PRINT","REM","END","GOTO","IF","THEN","GOSUB","RETURN","FOR","TO","STEP","NEXT"];
 const TokenType = {
   integer : "integer",
+  label : "label",
   word : "word",
   less : "less",
   lessOrEqual : "lessOrEqual",
@@ -91,6 +92,17 @@ class Lexer {
     }
     let lexeme = this.code.substring(start,this.position);
     return new Token(TokenType.integer,lexeme,parseInt(lexeme));
+  }
+  label(){
+    let start = this.position-1;
+    let peek = this.peek();
+    while(peek!=='"'&&!this.atEnd()){
+      this.consume();
+      peek = this.peek();
+    }
+    this.consume();
+    let lexeme = this.code.substring(start,this.position);
+    return new Token(TokenType.label,lexeme,lexeme.substr(1,lexeme.length-2));
   }
 }
 class Parser {
@@ -314,13 +326,28 @@ class Program {
         this.vars[variableName.lexeme] = evaluation;
         break;
       case "PRINT":
+        let label = parser.peek();
+        if(label?.type===TokenType.label){
+          parser.consume();
+          label = label.literal;
+        } else {
+          label = "";
+        }
+        if(parser.atEnd()){
+          bPrint(label);
+          break;
+        }
         expr = parser.expr();
+        if(expr===null) {
+          console.log(`Invalid expression`);
+          return;
+        }       
         evaluation = expr.evaluate(this.vars);
         if(evaluation===null) {
           console.log(`Could not evaluate expression.`)
           return;
         }       
-        bPrint(evaluation);
+        bPrint(`${label}${evaluation}`);
         break;
       case "END":
         this.ended = true;
@@ -514,6 +541,9 @@ function lex(code){
       case '0':
         tokens.push(new Token(TokenType.integer,'0',0));
         break;
+      case '"':
+        tokens.push(lexer.label());
+        break;
       default:
         if(singleCharacterTokens[c]!==undefined)
           tokens.push(new Token(singleCharacterTokens[c],c));
@@ -536,7 +566,7 @@ let t3 = lex("30REMHELLOWORLD");
 let p = new Program();
 p.writeLine("10 FOR P=1 TO 10")
 p.writeLine("15 FOR C=1 TO 10");
-p.writeLine("20 PRINT C");
+p.writeLine('20 PRINT "C="C');
 p.writeLine("25 NEXT C");
 p.writeLine("26 NEXT P");
 p.writeLine("30 PRINT 1")
