@@ -23,7 +23,7 @@ class Program {
     this.ended = false;
   }
   writeLine(source) {
-    let tokens = lex(source);
+    let tokens = new Lexer(source).lex();
     let parser = new Parser(tokens);
     let lineNumber = parser.peek();
     if(lineNumber?.type!==TokenType.integer) {
@@ -253,49 +253,4 @@ class Program {
     if(!parser.atEnd()) //TODO DELETE
       console.log(`Tokens weren't entirely consumed.`);
   }
-}
-
-function lex(code){
-  let tokens = [];
-  let lexer = new Lexer(code);
-  while(!lexer.atEnd()) {
-    let c = lexer.consume();
-    switch(c) {
-      case '<':
-        if(lexer.matchAndConsume('='))
-          tokens.push(new Token(TokenType.lessOrEqual,"<="));
-        else if(lexer.matchAndConsume('>'))
-          tokens.push(new Token(TokenType.notEqual,"<>"));
-        else
-          tokens.push(new Token(TokenType.less,'<'));
-        break;
-      case '>':
-        if(lexer.matchAndConsume('='))
-          tokens.push(new Token(TokenType.greaterOrEqual,">="));
-        else
-          tokens.push(new Token(TokenType.greater,'>'));
-        break;
-      case ' ':
-      case '\t':
-      case '\r':
-        break;
-      case '0':
-        tokens.push(new Token(TokenType.integer,'0',0));
-        break;
-      case '"':
-        tokens.push(lexer.label());
-        break;
-      default:
-        if(singleCharacterTokens[c]!==undefined)
-          tokens.push(new Token(singleCharacterTokens[c],c));
-        else if(isLetter(c))
-          tokens.push(lexer.word());
-        else if(isDigit(c)&&c!='0')
-          tokens.push(lexer.integer());
-        else
-          console.log(`Char ${c} can't be tokenized.`)
-        break;
-    }
-  }
-  return tokens;
 }

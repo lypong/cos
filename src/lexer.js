@@ -4,6 +4,49 @@ class Lexer {
     this.position = 0;
     this.lexedKeyword = false;
   }
+  lex(){
+    let tokens = [];
+    while(!this.atEnd()) {
+      let c = this.consume();
+      switch(c) {
+        case '<':
+          if(this.matchAndConsume('='))
+            tokens.push(new Token(TokenType.lessOrEqual,"<="));
+          else if(this.matchAndConsume('>'))
+            tokens.push(new Token(TokenType.notEqual,"<>"));
+          else
+            tokens.push(new Token(TokenType.less,'<'));
+          break;
+        case '>':
+          if(this.matchAndConsume('='))
+            tokens.push(new Token(TokenType.greaterOrEqual,">="));
+          else
+            tokens.push(new Token(TokenType.greater,'>'));
+          break;
+        case ' ':
+        case '\t':
+        case '\r':
+          break;
+        case '0':
+          tokens.push(new Token(TokenType.integer,'0',0));
+          break;
+        case '"':
+          tokens.push(this.label());
+          break;
+        default:
+          if(singleCharacterTokens[c]!==undefined)
+            tokens.push(new Token(singleCharacterTokens[c],c));
+          else if(isLetter(c))
+            tokens.push(this.word());
+          else if(isDigit(c)&&c!='0')
+            tokens.push(this.integer());
+          else
+            console.log(`Char ${c} can't be tokenized.`)
+          break;
+      }
+    }
+    return tokens;
+  }
   atEnd(offset) {
     if(offset === undefined)
       offset = 0;
