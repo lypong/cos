@@ -498,17 +498,6 @@ function isLetter(c) {
     return false;
   return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
-function isOperator(type) {
-  switch(type){
-      case TokenType.plus:
-      case TokenType.minus:
-      case TokenType.mult:
-      case TokenType.div:
-      case TokenType.exp:
-        return true;
-  }
-  return false;
-}
 function bPrint(...args){
   console.log(...args);
 }
