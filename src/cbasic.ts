@@ -1,4 +1,7 @@
 class Line {
+  source : string;
+  tokens : Token[];
+  lineNumber : number;
   constructor(source,tokens,lineNumber){
     this.source = source;
     this.tokens = tokens;
@@ -6,6 +9,10 @@ class Line {
   }
 }
 class For {
+  start : number;
+  variableName : string;
+  to : number;
+  step : number;
   constructor(start,variableName,to,step){
     this.start = start;
     this.variableName = variableName;
@@ -14,6 +21,13 @@ class For {
   }
 }
 class Program {
+  vars : {[x:string]:number};
+  lines : {[x:string]:Line};
+  goSubStack : number[];
+  forStack : For[];
+  instructionPointer : number;
+  ended : boolean;
+  OrderedLines? : Line[];
   constructor() {
     this.vars = {};
     this.lines = {};
@@ -93,14 +107,13 @@ class Program {
         break;
       case "PRINT":
         let label = parser.peek();
+        let literal = "";
         if(label?.type===TokenType.label){
           parser.consume();
-          label = label.literal;
-        } else {
-          label = "";
+          literal = label.literal as string;
         }
         if(parser.atEnd()){
-          bPrint(label);
+          bPrint(literal);
           break;
         }
         expr = parser.expr();
@@ -113,7 +126,7 @@ class Program {
           console.log(`Could not evaluate expression.`)
           return;
         }       
-        bPrint(`${label}${evaluation}`);
+        bPrint(`${literal}${evaluation}`);
         break;
       case "END":
         this.ended = true;
@@ -197,13 +210,13 @@ class Program {
           return;
         }
         let toExpr = parser.expr();
-        let toEvaluation = toExpr.evaluate(this.args);
+        let toEvaluation = toExpr.evaluate(this.vars);
         let stepKeyword = parser.peek();
         let stepEvaluation = 1;
         if(stepKeyword?.lexeme === "STEP"){
           parser.consume();
           let stepExpr = parser.expr();
-          stepEvaluation = stepExpr.evaluate(this.args);
+          stepEvaluation = stepExpr.evaluate(this.vars);
         }
         this.vars[variableName.lexeme] = evaluation;
         if((stepEvaluation>0&&evaluation>toEvaluation)||(stepEvaluation<0&&evaluation<toEvaluation)) {

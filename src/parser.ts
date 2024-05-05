@@ -1,33 +1,35 @@
 class Parser {
-  constructor(tokens) {
+  tokens : Token[];
+  position : number;
+  constructor(tokens: Token[]) {
     this.tokens = tokens;
     this.position = 0;
   }
-  atEnd(offset) {
+  atEnd(offset?:number) : boolean {
     if(offset === undefined)
       offset = 0;
     return this.position + offset >=this.tokens.length;
   }
-  consume() {
+  consume() : Token {
     if (this.atEnd())
       return null;
     return this.tokens[this.position++];
   }
-  peek(offset) {
+  peek(offset?:number) : Token {
     if(offset === undefined)
       offset = 0;
     if(this.atEnd(offset))
       return null;
     return this.tokens[this.position+offset];
   }
-  matchAndConsume(t) {
+  matchAndConsume(t:TokenType) : boolean {
     if(this.peek()?.type!==t)
       return false;
     this.consume();
     return true;
   }
   //TODO support exponentiation.
-  factor() {
+  factor() : BNode {
     let peek = this.peek();
     let unaryMinus = this.matchAndConsume(TokenType.minus);
     if(unaryMinus) {
@@ -50,15 +52,15 @@ class Parser {
         if(keywords.includes(peek.lexeme))
           return null;
         this.consume();
-        return new BNode(nodeGetVar,peek.lexeme);
+        return new BNode("getVar",peek.lexeme);
       case TokenType.integer:
         this.consume();
-        return new BNode(TokenType.plus,0,peek.literal);
+        return new BNode(TokenType.plus,0,peek.literal as number);
       default: return null;
     }
   }
 
-  term() {
+  term() : BNode {
     let lhs = this.factor();
     let multOrDiv = this.peek();
     let n = new BNode(TokenType.mult,lhs,1);
@@ -73,7 +75,7 @@ class Parser {
     return n;
   }
 
-  expr() {
+  expr() : BNode {
     let lhs;
     lhs = this.term(); 
     let n = new BNode(TokenType.plus,lhs,0);

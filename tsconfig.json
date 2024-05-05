@@ -4,5 +4,5 @@
       "allowJs": true,
       "target": "ES2017"
     },
-    "include": ["./src/**/*"]
+    "include": ["./src/*"]
   }

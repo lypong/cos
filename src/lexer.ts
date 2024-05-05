@@ -1,10 +1,13 @@
 class Lexer {
-  constructor(code) {
+  code : string;
+  position : number;
+  lexedKeyword : boolean;
+  constructor(code : string) {
     this.code = code;
     this.position = 0;
     this.lexedKeyword = false;
   }
-  lex(){
+  lex() : Token[]{
     let tokens = [];
     while(!this.atEnd()) {
       let c = this.consume();
@@ -47,30 +50,30 @@ class Lexer {
     }
     return tokens;
   }
-  atEnd(offset) {
+  atEnd(offset? : number) : boolean {
     if(offset === undefined)
       offset = 0;
     return this.position + offset >=this.code.length;
   }
-  consume() {
+  consume() : string {
     if (this.atEnd())
       return null;
     return this.code[this.position++];
   }
-  peek(offset) {
+  peek(offset? : number) : string {
     if(offset === undefined)
       offset = 0;
     if(this.atEnd(offset))
       return null;
     return this.code[this.position+offset];
   }
-  matchAndConsume(c){
+  matchAndConsume(c : string) : boolean{
     if(this.peek()!==c)
       return false;
     this.consume();
     return true;
   }
-  word(){
+  word() : Token{
     let start = this.position-1;
     let peek = this.peek();
     let sub = this.code[start];
@@ -86,7 +89,7 @@ class Lexer {
     }
     return new Token(TokenType.word,sub);
   }
-  integer(){
+  integer() : Token{
     let start = this.position-1;
     let peek = this.peek();
     while(isDigit(peek)){
@@ -96,7 +99,7 @@ class Lexer {
     let lexeme = this.code.substring(start,this.position);
     return new Token(TokenType.integer,lexeme,parseInt(lexeme));
   }
-  label(){
+  label() : Token{
     let start = this.position-1;
     let peek = this.peek();
     while(peek!=='"'&&!this.atEnd()){

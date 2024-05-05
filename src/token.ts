@@ -1,21 +1,21 @@
 const keywords = ["LET","PRINT","REM","END","GOTO","IF","THEN","GOSUB","RETURN","FOR","TO","STEP","NEXT"];
-const TokenType = {
-  integer : "integer",
-  label : "label",
-  word : "word",
-  less : "less",
-  lessOrEqual : "lessOrEqual",
-  greater : "greater",
-  greaterOrEqual : "greaterOrEqual",
-  notEqual : "notEqual",
-  equal : "equal",
-  plus : "plus",
-  minus : "minus",    
-  mult : "mult",
-  div : "div",
-  exp : "exp",
-  openParen : "openParen",
-  closeParen : "closeParen",
+enum TokenType {
+  integer = "integer",
+  label = "label",
+  word = "word",
+  less = "less",
+  lessOrEqual = "lessOrEqual",
+  greater = "greater",
+  greaterOrEqual = "greaterOrEqual",
+  notEqual = "notEqual",
+  equal = "equal",
+  plus = "plus",
+  minus = "minus",    
+  mult = "mult",
+  div = "div",
+  exp = "exp",
+  openParen = "openParen",
+  closeParen = "closeParen",
 }
 const singleCharacterTokens = {
   '=' : TokenType.equal,
@@ -28,12 +28,15 @@ const singleCharacterTokens = {
   ')' : TokenType.closeParen,
 }
 class Token {
-    constructor(type,lexeme,literal) {
+  type : TokenType;
+  lexeme : string;
+  literal? : number|string;
+    constructor(type : TokenType,lexeme: string,literal?: number|string) {
       this.type = type;
       this.lexeme = lexeme;
       this.literal = literal;
     }
-    asString() {
+    asString() : string {
       return `Token { type : ${this.type}, lexeme : ${this.lexeme}, literal : ${this.literal}}`;
     }
 }
