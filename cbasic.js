@@ -102,7 +102,7 @@ class Lexer {
     }
     this.consume();
     let lexeme = this.code.substring(start,this.position);
-    return new Token(TokenType.label,lexeme,lexeme.substr(1,lexeme.length-2));
+    return new Token(TokenType.label,lexeme,lexeme.slice(1,lexeme.length-1));
   }
 }
 class Parser {
