@@ -24,4 +24,5 @@ function bPrint(...args : any[]){
       } else
         termElement.appendChild(child);
   })
+  window.scrollTo(0, document.body.scrollHeight);
 }
