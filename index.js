@@ -9,7 +9,7 @@ addEventListener("keydown",(event)=>{
         bPrint(input);
         if(input==="RUN")
             p.runProgram();
-        else
+        else if(input.length>0)
             p.writeLine(input);
         input = "";
     }

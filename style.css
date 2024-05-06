@@ -5,6 +5,7 @@ p {
     font-family: 'Perfect DOS VGA 437', sans-serif;
     color: grey;
     margin: 0;
+    white-space: pre-wrap;
 }
 #blink {
     animation: blinker 1s linear infinite;

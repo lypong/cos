@@ -10,13 +10,18 @@ function isLetter(c : string) : boolean {
 }
 function bPrint(...args : any[]){
   let termElement=document.getElementById("term");
-  args.forEach((arg)=>`${arg}`.split('\n').forEach((l)=>{
-      let p = document.createElement("p");
-      p.textContent = l;
+  args.forEach((arg)=>{
+      let child;
+      if(arg.length>0){
+        child = document.createElement("p");
+        child.textContent = `${arg}`;
+      }
+      else
+        child = document.createElement("br");
       if(termElement===null) {
         console.error("div with id 'term' does not exist");
         return;
       } else
-        termElement.appendChild(p);
-  }))
+        termElement.appendChild(child);
+  })
 }
