@@ -183,6 +183,7 @@ class Program {
           this.crash("There shall be nothing after END");
           return false;
         }
+        this.ended = true;
         break;
       case "RETURN":
         let pop = this.goSubStack.pop();
