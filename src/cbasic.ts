@@ -36,6 +36,14 @@ class Program {
     this.instructionPointer = 0;
     this.ended = false;
   }
+  listLines(){
+    this.generateOrderedLines();
+    this.OrderedLines?.forEach((l)=>bPrint(l.source));
+  }
+  generateOrderedLines(){
+    this.OrderedLines = Object.values(this.lines);
+    this.OrderedLines.sort((a,b)=>a.lineNumber-b.lineNumber);
+  }
   partialReset() {
     this.vars = {};
     this.goSubStack = [];
@@ -86,8 +94,11 @@ class Program {
     return true;
   }
   runProgram() {
-    this.OrderedLines = Object.values(this.lines);
-    this.OrderedLines.sort((a,b)=>a.lineNumber-b.lineNumber);
+    this.generateOrderedLines();
+    if(this.OrderedLines===undefined) {
+      this.crash("BUG: Lines are not sorted out");
+      return false;
+    }
     while(this.instructionPointer<this.OrderedLines.length&&!this.ended){
       this.runStatement(this.OrderedLines[this.instructionPointer++].tokens);
     }
