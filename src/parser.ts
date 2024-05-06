@@ -52,7 +52,15 @@ class Parser {
         if(keywords.includes(peek.lexeme))
           return null;
         this.consume();
-        return new BNode("getVar",peek.lexeme);
+        let name = peek.lexeme;
+        peek = this.peek();
+        if(peek?.type===TokenType.openParen){
+          let param = this.expr();
+          if(param===null)
+            return null;
+          return new BNode("callFunc",name,param);
+        }
+        return new BNode("getVar",name);
       case TokenType.integer:
         this.consume();
         return new BNode(TokenType.plus,0,peek.literal as number);

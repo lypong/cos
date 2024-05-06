@@ -1,9 +1,13 @@
 type Operator = "getVar" |
+ "callFunc" |
  TokenType.plus |
  TokenType.minus |
  TokenType.mult |
  TokenType.div |
  TokenType.exp;
+const builtins : {[x:string]:(param:number)=>number} = {
+  "INT" : Math.floor,
+}
 class BNode{
   operator : Operator;
   lhs : BNode|number|string;
@@ -16,6 +20,15 @@ class BNode{
   evaluate(vars:{[x:string]:number}): number|null{
     let evaluatedLhs : number;
     let evaluatedRhs : number;
+    if(this.operator==="callFunc"){
+      let f = builtins[this.lhs as string];
+      if(f===undefined)
+        return null;
+      let evaluated = (this.rhs as BNode).evaluate(vars);
+      if(evaluated===null)
+        return null;
+      return f(evaluated);
+    }
     if((this.lhs as any).evaluate===undefined)
       evaluatedLhs = this.lhs as number;
     else {
