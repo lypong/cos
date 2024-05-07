@@ -406,7 +406,7 @@ class Program {
       case "REM":
         return true;
       default:
-        this.crash(`Expected keyword got ${keyword}`);
+        this.crash(`Expected keyword got ${keyword.lexeme}`);
         return false;
     }
     if(!parser.atEnd()) {
