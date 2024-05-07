@@ -95,6 +95,7 @@ class Program {
   }
   runProgram() {
     this.generateOrderedLines();
+    this.ended = false;
     if(this.OrderedLines===undefined) {
       this.crash("BUG: Lines are not sorted out");
       return false;
