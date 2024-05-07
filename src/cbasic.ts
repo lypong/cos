@@ -52,7 +52,7 @@ class Program {
     this.ended = false;
   }
   crash(errorMessage: string) {
-    if(this.OrderedLines===undefined||this.OrderedLines[this.instructionPointer]===undefined)
+    if(this.OrderedLines===undefined||this.OrderedLines[this.instructionPointer-1]===undefined)
       bPrint(errorMessage);
     else
       bPrint(`${errorMessage} line : ${this.OrderedLines[this.instructionPointer-1].source}`);
