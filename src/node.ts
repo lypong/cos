@@ -6,7 +6,16 @@ type Operator = "getVar" |
  TokenType.div |
  TokenType.exp;
 const builtins : {[x:string]:(param:number)=>number} = {
-  "INT" : Math.floor,
+  "INT" : Math.trunc,
+  "RND" : Math.random,
+  "SIN" : Math.sin,
+  "COS" : Math.cos,
+  "TAN" : Math.tan,
+  "ATN" : Math.atan,
+  "EXP" : Math.exp,
+  "ABS" : Math.abs,
+  "LOG" : (n)=>Math.log(Math.abs(n)),
+  "SQR" : (n)=>Math.sqrt(Math.abs(n)),
 }
 class BNode{
   operator : Operator;
