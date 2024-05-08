@@ -94,6 +94,7 @@ class Program {
     return true;
   }
   runProgram() {
+    this.partialReset();
     this.generateOrderedLines();
     this.ended = false;
     if(this.OrderedLines===undefined) {
@@ -103,7 +104,6 @@ class Program {
     while(this.instructionPointer<this.OrderedLines.length&&!this.ended){
       this.runStatement(this.OrderedLines[this.instructionPointer++].tokens);
     }
-    this.partialReset();
   }
   runStatement(tokens: Token[]) : boolean{
     let parser = new Parser(tokens);
