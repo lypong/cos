@@ -8,12 +8,16 @@ addEventListener("keydown",(event)=>{
     if(event.key==="Enter"){
         bPrint(input);
         // TODO USE PROPER PARSER
-        if(input==="RUN")
-            p.runProgram();
-        else if(input==="LIST")
-            p.listLines();
-        else if(input.length>0)
-            p.writeLine(input);
+        try{
+            if(input==="RUN")
+                p.runProgram();
+            else if(input==="LIST")
+                p.listLines();
+            else if(input.length>0)
+                p.writeLine(input);
+        } catch(e) {
+            p.crash(e.message);
+        }
         input = "";
     }
     else if(event.key.length===1)

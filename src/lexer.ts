@@ -45,7 +45,7 @@ class Lexer {
           else if(isDigit(c)&&c!='0')
             tokens.push(this.integer());
           else
-            console.log(`Char ${c} can't be tokenized.`)
+            throw new Error(`Char ${c} can't be tokenized.`);
           break;
       }
     }

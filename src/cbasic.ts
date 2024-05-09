@@ -105,51 +105,27 @@ class Program {
       this.runStatement(this.OrderedLines[this.instructionPointer++].tokens);
     }
   }
-  runStatement(tokens: Token[]) : boolean{
+  runStatement(tokens: Token[]) : undefined{
     let parser = new Parser(tokens);
-    let lineNumber = parser.consume();
-    if((lineNumber as any).type!==TokenType.integer) {
-      if(lineNumber===null)
-        this.crash("Wanted line number but tokens are empty");
-      else
-        this.crash(`Expected line number got ${lineNumber.lexeme}`);
-      return false;
-    }
+    let lineNumber = parser.consume() as Token;
+    expectDefinedOrThrow(lineNumber,"Wanted line number but tokens are empty");
+    expectEqualOrThrow(lineNumber.type,TokenType.integer,`Expected line number got ${lineNumber.lexeme}`);
     let expr,evaluation,variableName;
     let goSub = false;
-    let keyword = parser.consume();
-    if(keyword===null){
-      this.crash("Wanted keyword but tokens are empty");
-      return false;
-    }
+    let keyword = parser.consume() as Token;
+    expectDefinedOrThrow(keyword,"Wanted keyword but tokens are empty");
     switch(keyword.lexeme) {
       case "LET":
-        variableName = parser.consume();
-        if((variableName as any).type!==TokenType.word){
-          if(variableName===null)
-            this.crash("Wanted variable name but tokens are empty");
-          else
-            this.crash(`Expected identifier got ${variableName.lexeme}`);
-          return false;
-        }
-        if(keywords.includes((variableName as Token).lexeme)) {
-          this.crash(`Expected variable name name got keyword instead : ${(variableName as Token).lexeme}`);
-          return false;
-        }
-        if(!parser.matchAndConsume(TokenType.equal)){
-          this.crash("Expected = after variable name");
-          return false;
-        }
-        expr = parser.expr();
-        if(expr===null){
-          this.crash("Failed to create tree for expression");
-          return false;
-        }
-        evaluation = expr.evaluate(this.vars);
-        if(evaluation===null) {
-          this.crash("Could not evaluate expression");
-          return false;
-        }
+        variableName = parser.consume() as Token;
+        expectDefinedOrThrow(variableName,"Wanted variable name but tokens are empty");
+        expectEqualOrThrow(variableName.type,TokenType.word,`Expected variable name got ${variableName.lexeme}`);
+        expectNotKeywordOrThrow(variableName,`Expected variable name name got keyword instead : ${variableName.lexeme}`);
+        if(!parser.matchAndConsume(TokenType.equal))
+          throw new Error("Expected = after variable name");
+        expr = parser.expr() as BNode;
+        expectDefinedOrThrow(expr,"Failed to create tree for expression");
+        evaluation = expr.evaluate(this.vars) as number;
+        expectDefinedOrThrow(evaluation,"Could not evaluate expression");
         this.vars[(variableName as Token).lexeme] = evaluation;
         break;
       case "PRINT":
@@ -163,99 +139,54 @@ class Program {
           bPrint(literal);
           break;
         }
-        expr = parser.expr();
-        if(expr===null){
-          this.crash("Failed to create tree for expression");
-          return false;
-        }
-        evaluation = expr.evaluate(this.vars);
-        if(evaluation===null) {
-          this.crash("Could not evaluate expression");
-          return false;
-        }
-        if(!parser.atEnd()) {
-          this.crash("Invalid expression");
-          return false;
-        }  
+        expr = parser.expr() as BNode;
+        expectDefinedOrThrow(expr,"Failed to create tree for expression");
+        evaluation = expr.evaluate(this.vars) as number;
+        expectDefinedOrThrow(evaluation,"Could not evaluate expression");
+        if(!parser.atEnd())
+          throw new Error("Invalid expression");
         bPrint(`${literal}${evaluation}`);
         break;
       case "END":
-        if(!parser.atEnd()) {
-          this.crash("There shall be nothing after END");
-          return false;
-        }
+        if(!parser.atEnd())
+          throw new Error("Invalid expression");
         this.ended = true;
         break;
       case "RETURN":
-        let pop = this.goSubStack.pop();
-        if(pop===undefined) {
-          this.crash("Could not return because return stack is empty");
-          return false;
-        }
-        if(!parser.atEnd()) {
-          this.crash("There shall be nothing after RETURN");
-          return false;
-        }
+        let pop = this.goSubStack.pop() as number;
+        expectDefinedOrThrow(pop,"Could not return because return stack is empty");
+        if(!parser.atEnd())
+          throw new Error("There shall be nothing after RETURN");
         this.goTo(pop);
         break;
       case "GOSUB":
-        if(this.OrderedLines===undefined) {
-          this.crash("BUG: Lines are not sorted out");
-          return false;
-        }
+        expectDefinedOrThrow(this.OrderedLines,"BUG: Lines are not sorted out");
         goSub = true;
       case "GOTO":
-        lineNumber = parser.consume();
-        if(lineNumber?.type!==TokenType.integer) {
-          this.crash("Expected line number after GOTO");
-          return false;
-        }
-        if(!parser.atEnd()) {
-          this.crash("There shall be nothing after line number");
-          return false;
-        }
+        lineNumber = parser.consume() as Token;
+        expectEqualOrThrow(lineNumber?.type,TokenType.integer,"Expected line number after GOTO")
+        if(!parser.atEnd())
+          throw new Error("There shall be nothing after line number");
         if(goSub)
           this.goSubStack.push((this.OrderedLines as Line[])[this.instructionPointer].lineNumber);
         this.goTo((lineNumber as Token).literal as number);
         break;
       case "IF":
-        expr = parser.expr();
-        if(expr===null){
-          this.crash("Failed to create tree for expression");
-          return false;
-        }
-        evaluation = expr.evaluate(this.vars);
-        if(evaluation===null) {
-          this.crash("Could not evaluate expression");
-          return false;
-        }
+        expr = parser.expr() as BNode;
+        expectDefinedOrThrow(expr,"Failed to create tree for expression");
+        evaluation = expr.evaluate(this.vars) as number;
+        expectDefinedOrThrow(evaluation,"Could not evaluate expression");
         let relational = parser.consume();
-        let exprRhs = parser.expr();
-        if(exprRhs===null){
-          this.crash("Failed to create tree for expression");
-          return false;
-        }
-        let evaluationRhs = exprRhs.evaluate(this.vars);
-        if(evaluationRhs===null) {
-          this.crash("Could not evaluate expression");
-          return false;
-        }
-        let thenKeyword = parser.consume();
-        if(thenKeyword?.lexeme!=="THEN"){
-          if(thenKeyword?.lexeme===null)
-            this.crash("Expected THEN after comparison");
-          else
-            this.crash(`Expected THEN after comparison got ${thenKeyword?.lexeme}`);
-          return false;
-        }
-        lineNumber = parser.consume();
-        if(lineNumber?.type!==TokenType.integer) {
-          if(lineNumber?.lexeme===null)
-            this.crash("Expected line number after THEN");
-          else
-            this.crash(`Expected line number after THEN got ${lineNumber?.lexeme}`);
-          return false;
-        }
+        let exprRhs = parser.expr() as BNode;
+        expectDefinedOrThrow(exprRhs,"Failed to create tree for right-hand side expression");
+        let evaluationRhs = exprRhs.evaluate(this.vars) as number;
+        expectDefinedOrThrow(evaluationRhs,"Could not evaluate right-hand side expression");
+        let thenKeyword = parser.consume() as Token;
+        expectDefinedOrThrow(thenKeyword,"Expected THEN after comparison");
+        expectEqualOrThrow(thenKeyword.lexeme,"THEN",`Expected THEN after comparison got ${thenKeyword?.lexeme}`);
+        lineNumber = parser.consume() as Token;
+        expectDefinedOrThrow(lineNumber,"Expected line number after THEN");
+        expectEqualOrThrow(lineNumber.type,TokenType.integer,`Expected line number after THEN got ${lineNumber?.lexeme}`);
         let ok;
         switch(relational?.type){
           case TokenType.less:
@@ -279,118 +210,62 @@ class Program {
           default:
             this.crash(`Expected relational got ${relational?.asString}`);
         }
-        if(!parser.atEnd()) {
-          this.crash("There shall be nothing after line number");
-          return false;
-        }
+        if(!parser.atEnd())
+          throw new Error("There shall be nothing after line number");
         if(ok)
           this.goTo(lineNumber.literal as number);
         break;
       case "FOR":
-        variableName = parser.consume();
-        if((variableName as any).type!==TokenType.word){
-          if(variableName===null)
-            this.crash("Expected variable name");
-          else
-            this.crash(`Expected variable name got ${variableName.lexeme}`);
-          return false;
-        }
-        if(keywords.includes((variableName as Token).lexeme)) {
-          this.crash(`Expected variable name got keyword ${(variableName as Token).lexeme}`);
-          return false;
-        }
-        if(!parser.matchAndConsume(TokenType.equal)){
-          this.crash("Expected = after variable name");
-          return false;
-        }
-        expr = parser.expr();
-        if(expr===null){
-          this.crash("Failed to create tree for expression");
-          return false;
-        }
-        evaluation = expr.evaluate(this.vars);
-        if(evaluation===null) {
-          this.crash("Could not evaluate expression");
-          return false;
-        }
-        let toKeyword = parser.consume();
-        if(toKeyword?.lexeme!=="TO") {
-          if(toKeyword===null)
-            this.crash("Expected keyword TO");
-          else
-            this.crash(`Expected keyword TO got ${toKeyword.lexeme}`);
-          return false;
-        }
-        let toExpr = parser.expr();
-        if(toExpr===null) {
-          this.crash("Failed to create tree for expression after TO");
-          return false;
-        }
-        let toEvaluation = toExpr.evaluate(this.vars);
-        if(toEvaluation===null) {
-          this.crash("Could not evaluate expression after TO");
-          return false;
-        }   
+        variableName = parser.consume() as Token;
+        expectDefinedOrThrow(variableName,"Expected variable name");
+        expectEqualOrThrow(variableName.type,TokenType.word,`Expected variable name got ${variableName.lexeme}`);
+        expectNotKeywordOrThrow(variableName,`Expected variable name got keyword ${(variableName as Token).lexeme}`);
+        if(!parser.matchAndConsume(TokenType.equal))
+          throw new Error("Expected = after variable name");
+        expr = parser.expr() as BNode;
+        expectDefinedOrThrow(expr,"Failed to create tree for expression");
+        evaluation = expr.evaluate(this.vars) as number;
+        expectDefinedOrThrow(evaluation,"Could not evaluate expression");
+        let toKeyword = parser.consume() as Token;
+        expectDefinedOrThrow(toKeyword,"Expected keyword TO");
+        expectEqualOrThrow(toKeyword.lexeme,"TO",`Expected keyword TO got ${toKeyword.lexeme}`);
+        let toExpr = parser.expr() as BNode;
+        expectDefinedOrThrow(toExpr,"Failed to create tree for expression after TO");
+        let toEvaluation = toExpr.evaluate(this.vars) as number;
+        expectDefinedOrThrow(toEvaluation,"Could not evaluate expression after TO");
         let stepKeyword = parser.peek();
         let stepEvaluation = 1;
         if(stepKeyword?.lexeme === "STEP"){
           parser.consume();
-          let stepExpr = parser.expr();
-          if(stepExpr===null) {
-            this.crash("Failed to create tree for expression after STEP");
-            return false;
-          }
-          let e = stepExpr.evaluate(this.vars);
-          if(e===null) {
-            this.crash("Could not evaluate expression after STEP");
-            return false;
-          }
+          let stepExpr = parser.expr() as BNode;
+          expectDefinedOrThrow(stepExpr,"Failed to create tree for expression after STEP");
+          let e = stepExpr.evaluate(this.vars) as number;
+          expectDefinedOrThrow(e,"Could not evaluate expression after STEP");
           stepEvaluation = e;
         }
-        if(!parser.atEnd()) {
-          this.crash("Invalid expression");
-          return false;
-        }
-        if(this.OrderedLines===undefined) {
-          this.crash("BUG: Lines are not sorted out");
-          return false;
-        }
+        if(!parser.atEnd())
+          throw new Error("Invalid expression");
+        expectDefinedOrThrow(this.OrderedLines,"BUG: Lines are not sorted out");
+        let OrderedLines = this.OrderedLines as Line[];
         this.vars[(variableName as Token).lexeme] = evaluation;
         if((stepEvaluation>0&&evaluation>toEvaluation)||(stepEvaluation<0&&evaluation<toEvaluation)) {
-          while(this.OrderedLines[++this.instructionPointer]?.tokens[1]?.lexeme!=="NEXT"||this.OrderedLines[this.instructionPointer]?.tokens[2]?.lexeme!==(variableName as Token).lexeme)
-            if(this.instructionPointer>=this.OrderedLines.length){
-              this.crash("No corresponding NEXT statement found");
-              return false;
-            }
+          while(OrderedLines[++this.instructionPointer]?.tokens[1]?.lexeme!=="NEXT"||OrderedLines[this.instructionPointer]?.tokens[2]?.lexeme!==(variableName as Token).lexeme)
+            if(this.instructionPointer>=OrderedLines.length)
+              throw new Error("No corresponding NEXT statement found");
           this.instructionPointer++; //skips next
         } else
           this.forStack.push(new For(this.instructionPointer,(variableName as Token).lexeme,toEvaluation,stepEvaluation));
         break;
       case "NEXT":
-        variableName = parser.consume();
-        if((variableName as any).type!==TokenType.word){
-          if(variableName===null)
-            this.crash("Expected variable name");
-          else
-            this.crash(`Expected variable name got ${variableName.lexeme}`);
-          return false;
-        }
-        if(keywords.includes((variableName as Token).lexeme)) {
-          this.crash(`Expected variable name got keyword ${(variableName as Token).lexeme}`);
-          return false;
-        }
+        variableName = parser.consume() as Token;
+        expectDefinedOrThrow(variableName,"Expected variable name");
+        expectEqualOrThrow(variableName.type,TokenType.word,`Expected variable name got ${variableName.lexeme}`);
+        expectNotKeywordOrThrow(variableName,`Expected variable name got keyword ${(variableName as Token).lexeme}`);
         let topOfStack = this.forStack[this.forStack.length-1];
-        if(topOfStack?.variableName !== (variableName as Token).lexeme){
-          if(topOfStack?.variableName===undefined)
-            this.crash("No opened FOR statement")
-          else
-            this.crash(`NEXT statement does not match with FOR ${topOfStack?.variableName}<>${(variableName as Token).lexeme}`);
-          return false;
-        }
-        if(!parser.atEnd()) {
-          this.crash("There shall be nothing after variable name");
-          return false;
-        }
+        expectDefinedOrThrow(topOfStack?.variableName,"No opened FOR statement");
+        expectEqualOrThrow(topOfStack.variableName,variableName.lexeme,`NEXT statement does not match with FOR ${topOfStack?.variableName}<>${(variableName as Token).lexeme}`);
+        if(!parser.atEnd())
+          throw new Error("There shall be nothing after variable name");
         this.vars[(variableName as Token).lexeme] += topOfStack.step;
         if(topOfStack.step>0) {
           if(this.vars[(variableName as Token).lexeme]>topOfStack.to)
@@ -405,15 +280,11 @@ class Program {
         }
         break;
       case "REM":
-        return true;
+        break;
       default:
-        this.crash(`Expected keyword got ${keyword.lexeme}`);
-        return false;
+        throw new Error(`Expected keyword got ${keyword.lexeme}`);
     }
-    if(!parser.atEnd()) {
-      this.crash("BUG: Tokens weren't entirely consumed.");
-      return false;
-    }
-    return true;
+    if(!parser.atEnd())
+      throw new Error("BUG: Tokens weren't entirely consumed.");
   }
 }
