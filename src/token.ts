@@ -1,4 +1,18 @@
-const keywords = ["LET","PRINT","REM","END","GOTO","IF","THEN","GOSUB","RETURN","FOR","TO","STEP","NEXT"];
+const keywords = [
+  "LET",
+  "PRINT",
+  "REM",
+  "END",
+  "GOTO",
+  "IF",
+  "THEN",
+  "GOSUB",
+  "RETURN",
+  "FOR",
+  "TO",
+  "STEP",
+  "NEXT",
+];
 enum TokenType {
   integer = "integer",
   label = "label",
@@ -10,7 +24,7 @@ enum TokenType {
   notEqual = "notEqual",
   equal = "equal",
   plus = "plus",
-  minus = "minus",    
+  minus = "minus",
   mult = "mult",
   div = "div",
   exp = "exp",
@@ -18,25 +32,25 @@ enum TokenType {
   closeParen = "closeParen",
 }
 const singleCharacterTokens = {
-  '=' : TokenType.equal,
-  '+' : TokenType.plus,
-  '-' : TokenType.minus,
-  '*' : TokenType.mult,
-  '/' : TokenType.div,
-  '?' : TokenType.exp,
-  '(' : TokenType.openParen,
-  ')' : TokenType.closeParen,
-}
+  "=": TokenType.equal,
+  "+": TokenType.plus,
+  "-": TokenType.minus,
+  "*": TokenType.mult,
+  "/": TokenType.div,
+  "?": TokenType.exp,
+  "(": TokenType.openParen,
+  ")": TokenType.closeParen,
+};
 class Token {
-  type : TokenType;
-  lexeme : string;
-  literal? : number|string;
-    constructor(type : TokenType,lexeme: string,literal?: number|string) {
-      this.type = type;
-      this.lexeme = lexeme;
-      this.literal = literal;
-    }
-    asString() : string {
-      return `Token { type : ${this.type}, lexeme : ${this.lexeme}, literal : ${this.literal}}`;
-    }
+  type: TokenType;
+  lexeme: string;
+  literal?: number | string;
+  constructor(type: TokenType, lexeme: string, literal?: number | string) {
+    this.type = type;
+    this.lexeme = lexeme;
+    this.literal = literal;
+  }
+  asString(): string {
+    return `Token { type : ${this.type}, lexeme : ${this.lexeme}, literal : ${this.literal}}`;
+  }
 }
