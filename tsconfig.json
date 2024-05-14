@@ -1,9 +1,9 @@
 {
-    "compilerOptions": {
-      "outFile": "./built/bundle.js",
-      "allowJs": false,
-      "strict": true,
-      "target": "ES2017"
-    },
-    "include": ["./src/*"]
-  }
+  "compilerOptions": {
+    "outFile": "./built/bundle.js",
+    "allowJs": false,
+    "strict": true,
+    "target": "ES2017"
+  },
+  "include": ["./src/*"]
+}
