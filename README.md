@@ -13,7 +13,10 @@ Les commandes sont les suivantes : `RUN` et `LIST`.
 `RUN` lance le programme.
 
 ## Instructions (statements)
-Chaque ligne écrite doit comporter un numéro suivi d'une instructions et des ses arguments. Par exemple `10 PRINT "Hello world"`
+Chaque ligne écrite doit comporter un numéro suivi d'une instructions et des ses arguments. Par exemple 
+```basic
+10 PRINT "Hello world"
+```
 Les instructions supportées dans COS sont les suivantes :
 * PRINT
 * LET
