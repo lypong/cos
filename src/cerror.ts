@@ -1,4 +1,6 @@
-// Ce fichier comporte une liste de fonction permettant de vérifier de manière pratique et rapide la validité de variables
+// Ce fichier comporte une liste de fonctions
+// permettant de vérifier de manière pratique et rapide
+// la validité de variables.
 
 function expectEqualOrThrow(lhs: any, rhs: any, errorMessage: string) {
   if (lhs !== rhs) throw new Error(errorMessage);

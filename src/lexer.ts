@@ -1,4 +1,5 @@
-// Un lexer permet de générerer des tokens en itérant une liste de caractères.
+// Un lexer permet de générerer des tokens
+// en itérant une liste de caractères.
 
 class Lexer {
   code: string;

@@ -6,6 +6,8 @@ function isLetter(c: string): boolean {
   if (c === null) return false;
   return (c >= "a" && c <= "z") || (c >= "A" && c <= "Z");
 }
+// Ecrit les arguments dans le div term. 
+// Les arguments sont chacun placés dans un nouveau paragraphe.
 function bPrint(...args: any[]) {
   let termElement = document.getElementById("term");
   args.forEach((arg) => {
