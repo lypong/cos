@@ -1,0 +1,33 @@
+name: Deploy no worries
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["main"]
+
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git conf
+        run : |
+          git config --global user.email github-actions@github.com
+          git config --global user.name github-actions
+      - name: Checkout
+        uses: actions/checkout@v4.1.5
+      - name: Setup Node
+        uses: actions/setup-node@v4.0.2
+      - name: Install deps
+        run: npm -g install typescript
+      - name: Transpile
+        run: tsc
+      - name: Change branch
+        run: git checkout -b pages_change
+      - name: Add bundle
+        run: git add built/bundle.js -f
+      - name: Commit
+        run: git commit -m "ACTION add bundle"
+      - name: Push
+        run: git push origin pages_change:pages
