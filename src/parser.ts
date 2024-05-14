@@ -1,3 +1,5 @@
+// La classe Parser permet de naviguer à travers les tokens qui ont été lexés (voir lexer.ts). On peut créer des arbres d'expressions fait de nodes ou simplement consommer/voir token par token pour déterminer quelle suite de token correspond à quelle instruction.
+
 class Parser {
   tokens: Token[];
   position: number;

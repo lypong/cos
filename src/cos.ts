@@ -1,3 +1,5 @@
+// Ce fichier contient la logique d'interprétations des tokens à l'aide du parser.
+// Il gère une classe appelé Program qui est une sorte de machine virtuelle qui retient l'état du programme.
 class Line {
   source: string;
   tokens: Token[];

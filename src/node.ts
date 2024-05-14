@@ -1,3 +1,6 @@
+// Les nodes permettent de représenter une expression en forme d'arbre. le bas de l'arbre (analogie : feuilles) est évalué en premier de manière récursive jusqu'à atteindre et évaluer la node se trouvant à la base.
+// Le besoin de ces arbres se justifie par l'ordre des opérations. (voir recursive descent parser : est explicité dans le livre "Crafting Interpreters")
+
 type Operator =
   | "getVar"
   | "callFunc"
