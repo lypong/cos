@@ -5,7 +5,7 @@ pour fonctionner le projet doit être transpilé en javascript avec les commande
 
 ```bash
 cd chemin/vers/projet
-tsc .
+tsc
 ```
 ## Commandes
 Les commandes sont les suivantes : `RUN` et `LIST`.
