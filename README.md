@@ -18,7 +18,7 @@ Chaque ligne écrite doit comporter un numéro suivi d'une instructions et des s
 10 PRINT "Hello world"
 ```
 Les instructions supportées dans COS sont les suivantes :
-* PRINT
+* PRINT (attention son fonctionnement diffère de dartmouth basic)
 * LET
 * END (attention son fonctionnement diffère de dartmouth basic)
 * RETURN
@@ -27,5 +27,12 @@ Les instructions supportées dans COS sont les suivantes :
 * FOR
 * NEXT
 * REM
+
+## Différences majeures avec dartmouth basic
+* Les identifiant peuvent comporter plusieures lettres majuscules et minuscules, des chiffres (sauf le premier caractère) et des _ .
+* L'opérateur ^ de puissance n'est pas supporté, il peut toutefois être subsitué par une boucle.
+* Il peut y avoir plusieurs END dans un programme, pas forcément à la fin.
+* L'aritméthique à virgules flottantes est supportée mais les littéraux numériques doivent représenter des entiers.
+* PRINT prends au maximum un label (par exemple "hello world") et une expression strictement dans cet ordre. Si l'utilisateur veut afficher plusieures choses, il doit utiliser plusieurs PRINT.
 
 [documentation originale de dartmouth basic](https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://ia601901.us.archive.org/34/items/bitsavers_dartmouthB_3679804/BASIC_4th_Edition_Jan68_text.pdf&ved=2ahUKEwiPzqCFvo2GAxUB9AIHHWqtB9YQFnoECC4QAQ&usg=AOvVaw3fizFRoHowshdpbrjspwLb)
