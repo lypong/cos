@@ -128,10 +128,7 @@ class Program {
     expectDefinedOrThrow(keyword, "Wanted keyword but tokens are empty");
     switch (keyword.lexeme) {
       case "LET":
-        variableName = parser.consume() as Token;
-        expectDefinedOrThrow(variableName,"Wanted variable name but tokens are empty");
-        expectEqualOrThrow(variableName.type,TokenType.word,`Expected variable name got ${variableName.lexeme}`);
-        expectNotKeywordOrThrow(variableName,`Expected variable name name got keyword instead : ${variableName.lexeme}`);
+        variableName = consumeVariableNameOrThrow(parser);
         if (!parser.matchAndConsume(TokenType.equal))
           throw new Error("Expected = after variable name");
         expr = parser.expr() as BNode;
@@ -140,6 +137,7 @@ class Program {
         expectDefinedOrThrow(evaluation, "Could not evaluate expression");
         this.vars[(variableName as Token).lexeme] = evaluation;
         break;
+
       case "PRINT":
         let label = parser.peek();
         let literal = "";
@@ -158,10 +156,12 @@ class Program {
         if (!parser.atEnd()) throw new Error("Invalid expression");
         bPrint(`${literal}${evaluation}`);
         break;
+
       case "END":
         if (!parser.atEnd()) throw new Error("Invalid expression");
         this.ended = true;
         break;
+
       case "RETURN":
         let pop = this.goSubStack.pop() as number;
         expectDefinedOrThrow(pop,"Could not return because return stack is empty");
@@ -169,6 +169,7 @@ class Program {
           throw new Error("There shall be nothing after RETURN");
         this.goTo(pop);
         break;
+
       case "GOSUB":
         expectDefinedOrThrow(this.OrderedLines,"BUG: Lines are not sorted out");
         goSub = true;
@@ -183,6 +184,7 @@ class Program {
           );
         this.goTo((lineNumber as Token).literal as number);
         break;
+
       case "IF":
         expr = parser.expr() as BNode;
         expectDefinedOrThrow(expr, "Failed to create tree for expression");
@@ -226,11 +228,9 @@ class Program {
           throw new Error("There shall be nothing after line number");
         if (ok) this.goTo(lineNumber.literal as number);
         break;
+
       case "FOR":
-        variableName = parser.consume() as Token;
-        expectDefinedOrThrow(variableName,"Expected variable name");
-        expectEqualOrThrow(variableName.type,TokenType.word,`Expected variable name got ${variableName.lexeme}`);
-        expectNotKeywordOrThrow(variableName,`Expected variable name got keyword ${(variableName as Token).lexeme}`);
+        variableName = consumeVariableNameOrThrow(parser);
         if (!parser.matchAndConsume(TokenType.equal))
           throw new Error("Expected = after variable name");
         expr = parser.expr() as BNode;
@@ -282,11 +282,9 @@ class Program {
             ),
           );
         break;
+
       case "NEXT":
-        variableName = parser.consume() as Token;
-        expectDefinedOrThrow(variableName,"Expected variable name");
-        expectEqualOrThrow(variableName.type,TokenType.word,`Expected variable name got ${variableName.lexeme}`);
-        expectNotKeywordOrThrow(variableName,`Expected variable name got keyword ${(variableName as Token).lexeme}`);
+        variableName = consumeVariableNameOrThrow(parser);
         let topOfStack = this.forStack[this.forStack.length-1];
         expectDefinedOrThrow(topOfStack?.variableName,"No opened FOR statement");
         expectEqualOrThrow(topOfStack.variableName,variableName.lexeme,`NEXT statement does not match with FOR ${topOfStack?.variableName}<>${(variableName as Token).lexeme}`);
@@ -303,8 +301,10 @@ class Program {
           else this.instructionPointer = topOfStack.start;
         }
         break;
+
       case "REM":
         break;
+
       default:
         throw new Error(`Expected keyword got ${keyword.lexeme}`);
     }

@@ -6,6 +6,10 @@
 // (voir recursive descent parser)
 // (explicité dans le livre "Crafting Interpreters")
 
+// Le type Operator représente différents
+// opérateurs arithmétiques (réutilisés)
+// elle comporte aussi des opérateurs 
+// spécifiques au nodes.
 type Operator =
   | "getVar"
   | "callFunc"
@@ -14,6 +18,10 @@ type Operator =
   | TokenType.mult
   | TokenType.div
   | TokenType.exp;
+
+// Les builtins sont une association 
+// entre des noms de fonction BASIC
+// et leurs implémentations.
 const builtins: { [x: string]: (param: number) => number } = {
   INT: Math.trunc,
   RND: Math.random,
@@ -30,6 +38,7 @@ class BNode {
   operator: Operator;
   lhs: BNode | number | string;
   rhs?: BNode | number;
+  
   constructor(
     operator: Operator,
     lhs: BNode | number | string,
@@ -39,9 +48,14 @@ class BNode {
     this.lhs = lhs;
     this.rhs = rhs;
   }
+
   evaluate(vars: { [x: string]: number }): number | null {
     let evaluatedLhs: number;
     let evaluatedRhs: number;
+    // Si la node représente un appel de fonction,
+    // on appelle la fonction stockée dans le côté 
+    // gauche de la node, avec comme paramètre 
+    // l'évaluation du côté droit.
     if (this.operator === "callFunc") {
       let f = builtins[this.lhs as string];
       if (f === undefined) return null;
@@ -49,6 +63,16 @@ class BNode {
       if (evaluated === null) return null;
       return f(evaluated);
     }
+
+    // Si la node représente un accès de variable,
+    // on retourne la valeur associée à la variable
+    // si elle existe.
+    // Sinon on retourne 0
+    if (this.operator === "getVar") return vars[this.lhs as string] ?? 0;
+
+    // On évalue le côté gauche de la node.
+    // S'il a une fonction evaluate on l'apelle pour obtenir un nombre,
+    // Sinon on traite le côté gauche comme un nombre pas besoin d'évaluer.
     if ((this.lhs as any).evaluate === undefined)
       evaluatedLhs = this.lhs as number;
     else {
@@ -56,8 +80,9 @@ class BNode {
       if (evaluated === null) return null;
       evaluatedLhs = evaluated;
     }
-    // rhs can be undefined with operator nodeGetVar;
-    if (this.operator === "getVar") return vars[this.lhs as string] ?? 0;
+
+    // On évalue le côté droit de la node
+    // pareil que côté gauche
     if ((this.rhs as any).evaluate === undefined)
       evaluatedRhs = this.rhs as number;
     else {
@@ -65,6 +90,7 @@ class BNode {
       if (evaluated === null) return null;
       evaluatedRhs = evaluated;
     }
+
     switch (this.operator) {
       case TokenType.plus:
         return evaluatedLhs + evaluatedRhs;
