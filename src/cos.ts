@@ -45,6 +45,9 @@ class Program {
     this.generateOrderedLines();
     this.OrderedLines?.forEach((l) => bPrint(l.source));
   }
+  // A partir de notre hashmap,
+  // On réordonne les lignes
+  // pour les goto gosub et list
   generateOrderedLines() {
     this.OrderedLines = Object.values(this.lines);
     this.OrderedLines.sort((a, b) => a.lineNumber - b.lineNumber);
@@ -56,6 +59,8 @@ class Program {
     this.instructionPointer = 0;
     this.ended = false;
   }
+  // Ecrit un message d'erreur et termine
+  // la machine.
   crash(errorMessage: string) {
     if (
       this.OrderedLines === undefined ||
@@ -68,6 +73,8 @@ class Program {
       );
     this.ended = true;
   }
+  // On associe une ligne source
+  // à un objet Line dans une hashmap.
   writeLine(source: string): boolean {
     let tokens = new Lexer(source).lex();
     let parser = new Parser(tokens);
@@ -84,6 +91,9 @@ class Program {
     return true;
   }
   goTo(lineNumber: number): boolean {
+    // On fait une recherche binaire pour
+    // accédér rapidement à la ligne recherchée.
+    // Ensuite, on change l'instructionPointer.
     let low = 0;
     if (this.OrderedLines === undefined) {
       this.crash("BUG: Lines are not sorted out");
@@ -105,6 +115,8 @@ class Program {
     this.instructionPointer = mid;
     return true;
   }
+  // On réinitialise la machine,
+  // puis on exécute ligne par ligne.
   runProgram() {
     this.partialReset();
     this.generateOrderedLines();
@@ -117,16 +129,28 @@ class Program {
       this.runStatement(this.OrderedLines[this.instructionPointer++].tokens);
     }
   }
+  // Prend les tokens d'une ligne source en input,
+  // puis l'exécute.
   runStatement(tokens: Token[]): undefined {
     let parser = new Parser(tokens);
+    // On consomme le numéro de ligne.
     let lineNumber = parser.consume() as Token;
     expectDefinedOrThrow(lineNumber,"Wanted line number but tokens are empty");
     expectEqualOrThrow(lineNumber.type,TokenType.integer,`Expected line number got ${lineNumber.lexeme}`);
+    // On déclare les variables qui
+    // sont utilisées dans plusieures
+    // branches du switch
     let expr,evaluation,variableName;
     let goSub = false;
     let keyword = parser.consume() as Token;
     expectDefinedOrThrow(keyword, "Wanted keyword but tokens are empty");
+    // On regarde quel statement
+    // est demandé.
     switch (keyword.lexeme) {
+      // On prend consomme le nom de variable
+      // puis une expression.
+      // Ensuite on assigne son
+      // évalutation à la variable.
       case "LET":
         variableName = consumeVariableNameOrThrow(parser);
         if (!parser.matchAndConsume(TokenType.equal))
@@ -138,6 +162,8 @@ class Program {
         this.vars[(variableName as Token).lexeme] = evaluation;
         break;
 
+      // On consomme :
+      // PRINT ?$label ?$expr
       case "PRINT":
         let label = parser.peek();
         let literal = "";
@@ -162,6 +188,8 @@ class Program {
         this.ended = true;
         break;
 
+      // On retourne à l'adresse qu'on
+      // avait enregistrée lors du GOSUB
       case "RETURN":
         let pop = this.goSubStack.pop() as number;
         expectDefinedOrThrow(pop,"Could not return because return stack is empty");
@@ -170,6 +198,9 @@ class Program {
         this.goTo(pop);
         break;
 
+      // On appelle la fonction goTo()
+      // et on enregistre l'adresse
+      // si l'on part depuis GOSUB
       case "GOSUB":
         expectDefinedOrThrow(this.OrderedLines,"BUG: Lines are not sorted out");
         goSub = true;
@@ -185,6 +216,9 @@ class Program {
         this.goTo((lineNumber as Token).literal as number);
         break;
 
+      // On consomme : 
+      // IF $expr (< | > | <> | <= | >=) THEN $lineNumber
+      // puis on compare avec le relationnel(opérateur) associé.
       case "IF":
         expr = parser.expr() as BNode;
         expectDefinedOrThrow(expr, "Failed to create tree for expression");
@@ -226,9 +260,14 @@ class Program {
         }
         if (!parser.atEnd())
           throw new Error("There shall be nothing after line number");
+        // Si la condition est vraie,
+        // on va à la ligne indiquée
         if (ok) this.goTo(lineNumber.literal as number);
         break;
 
+      // On consomme : 
+      // FOR $variableName = $expr TO $toExpr ?(STEP $stepExpr)
+      // On ajoute notre FOR à la forStack.
       case "FOR":
         variableName = consumeVariableNameOrThrow(parser);
         if (!parser.matchAndConsume(TokenType.equal))
@@ -258,7 +297,10 @@ class Program {
           throw new Error("Invalid expression");
         expectDefinedOrThrow(this.OrderedLines,"BUG: Lines are not sorted out");
         let OrderedLines = this.OrderedLines as Line[];
+        // On définit notre variable d'itération.
         this.vars[(variableName as Token).lexeme] = evaluation;
+        // Si le STEP va dans le mauvais sens (infini),
+        // On saute le bloc.
         if (
           (stepEvaluation > 0 && evaluation > toEvaluation) ||
           (stepEvaluation < 0 && evaluation < toEvaluation)
@@ -273,6 +315,7 @@ class Program {
               throw new Error("No corresponding NEXT statement found");
           this.instructionPointer++; //skips next
         } else
+          // Ajout à la forStack.
           this.forStack.push(
             new For(
               this.instructionPointer,
@@ -283,6 +326,8 @@ class Program {
           );
         break;
 
+      // On consomme :
+      // NEXT $variableName
       case "NEXT":
         variableName = consumeVariableNameOrThrow(parser);
         let topOfStack = this.forStack[this.forStack.length-1];
@@ -290,6 +335,11 @@ class Program {
         expectEqualOrThrow(topOfStack.variableName,variableName.lexeme,`NEXT statement does not match with FOR ${topOfStack?.variableName}<>${(variableName as Token).lexeme}`);
         if (!parser.atEnd())
           throw new Error("There shall be nothing after variable name");
+        // On incrémente notre variable d'itération
+        // puis en fonction du sens d'itération,
+        // on vérifie si la boucle est finie.
+        // Si oui on enlève le FOR de la forStack,
+        // Sinon on saute au début de la boucle.
         this.vars[(variableName as Token).lexeme] += topOfStack.step;
         if (topOfStack.step > 0) {
           if (this.vars[(variableName as Token).lexeme] > topOfStack.to)
